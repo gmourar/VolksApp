@@ -9,7 +9,7 @@ import {
   Dimensions,
   Platform,
 } from 'react-native';
-import { Camera } from 'expo-camera';
+import { Camera, CameraView } from 'expo-camera';
 import { ConfigStorage } from '../utils/configStorage';
 import { API_BASE_URL } from '../utils/apiConfig';
 
@@ -73,11 +73,11 @@ export default function QRCodeScanner({ visible, onClose, onSuccess, onAlreadyDo
 
   // Gera timestamp ISO 8601 com timezone
   const generateClientAttemptAt = () => {
-  // Ajuste para fuso horário de Brasília (UTC-3)
-  const nowBrasilia = new Date(Date.now() - (3 * 60 * 60 * 1000));
-  // Força o offset de Brasília
-  const iso = nowBrasilia.toISOString().replace('Z', '-03:00');
-  return iso;
+    // Ajuste para fuso horário de Brasília (UTC-3)
+    const nowBrasilia = new Date(Date.now() - (3 * 60 * 60 * 1000));
+    // Força o offset de Brasília
+    const iso = nowBrasilia.toISOString().replace('Z', '-03:00');
+    return iso;
   };
 
   // Função dedicada para processar resposta do servidor
@@ -302,19 +302,18 @@ export default function QRCodeScanner({ visible, onClose, onSuccess, onAlreadyDo
           </TouchableOpacity>
         </View>
 
-        {/* Camera View */}
+        {/* Camera View - VERSÃO CORRIGIDA */}
         <View style={[styles.cameraContainer, { height: cameraHeight }]}>
-          <Camera
+          <CameraView
             ref={cameraRef}
             style={styles.camera}
-            type={Camera.Constants.Type.back}
-            onBarCodeScanned={scanned ? undefined : handleBarCodeScanned}
+            facing="back"
+            onBarcodeScanned={scanned ? undefined : handleBarCodeScanned}
             onCameraReady={onCameraReady}
-            barCodeScannerSettings={{
-              barCodeTypes: ['qr'],
-              interval: 500,
+            barcodeScannerSettings={{
+              barcodeTypes: ['qr'],
             }}
-            autoFocus={Camera.Constants.AutoFocus.on}
+            autofocus="on"
           >
             {/* Overlay com área de foco */}
             <View style={styles.overlay}>
@@ -337,7 +336,7 @@ export default function QRCodeScanner({ visible, onClose, onSuccess, onAlreadyDo
                 </View>
               )}
             </View>
-          </Camera>
+          </CameraView>
         </View>
 
         {/* Instructions */}

@@ -14,7 +14,7 @@ import {
 import SuccessScreen from '../components/SuccessScreen.js';
 import AlreadyDoneScreen from '../components/AlreadyDoneScreen';
 import { NetworkPermissions } from '../utils/networkPermissions';
-import { ConfigStorage } from '../utils/configStorage';
+import { ConfigStorage } from '../utils/configStorage.js';
 import { API_BASE_URL } from '../utils/apiConfig';
 
 const { width } = Dimensions.get('window');
@@ -237,18 +237,23 @@ export default function RegistrationScreen({ navigation, isProductionMode }) {
 
     try {
       let response;
+      const standName = (await ConfigStorage.getAtividade()) || 'the one';
+      const tabletName = await ConfigStorage.getTabletId();
 
       if (isProductionMode) {
         // Modo PRODUÇÃO - verifica direto na API de produção
         console.log('Modo PRODUÇÃO - verificando CPF na API de produção');
-        response = await fetch(`https://voudevolks.dev01.rpm.com.br/api/evento/cpf-status`, {
+        response = await fetch(`${API_BASE_URL}/cpf/status`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'Accept': 'application/json',
             'Token': 'f8331af6befa173f8cec0bc46df542',
           },
-          body: JSON.stringify({ cpf: displayCPF(cpf) }),
+          body: JSON.stringify({ cpf: displayCPF(cpf),
+                                stand_name: standName.toLowerCase(),
+                                tablet_name: tabletName,
+                                client_checked_at: generateClientCreatedAt(), }),
         });
 
         console.log('CPF Check Response Status:', response.status);
