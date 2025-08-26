@@ -1,26 +1,81 @@
 {
   "expo": {
     "name": "VolksApp",
-    "slug": "VolksApp",
-    "version": "1.0.0",
-    "orientation": "portrait",
+    "slug": "promoapp",
+    "version": "1.0.3",
+    "orientation": "landscape",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "newArchEnabled": true,
     "splash": {
-      "image": "./assets/splash-icon.png",
-      "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "orientation": "landscape",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Este app precisa acessar a câmera para ler QR codes",
+        "NSLocalNetworkUsageDescription": "Este app precisa acessar a rede local para funcionar",
+        "NSBonjourServices": ["_http._tcp", "_https._tcp"],
+        "UIStatusBarHidden": true,
+        "UIViewControllerBasedStatusBarAppearance": false
+      }
     },
     "android": {
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+      "package": "com.promoapp.app",
+      "versionCode": 2,
+      "orientation": "landscape",
+      "permissions": [
+        "android.permission.INTERNET",
+        "android.permission.ACCESS_NETWORK_STATE",
+        "android.permission.ACCESS_WIFI_STATE",
+        "android.permission.CHANGE_WIFI_STATE",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.BLUETOOTH",
+        "android.permission.BLUETOOTH_ADMIN",
+        "android.permission.BLUETOOTH_CONNECT",
+        "android.permission.BLUETOOTH_SCAN",
+        "android.permission.BLUETOOTH_ADVERTISE",
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.FOREGROUND_SERVICE_LOCATION",
+        "android.permission.FOREGROUND_SERVICE_DATA_SYNC",
+        "android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION",
+        "android.permission.FOREGROUND_SERVICE_CAMERA",
+        "android.permission.FOREGROUND_SERVICE_MICROPHONE",
+        "android.permission.FOREGROUND_SERVICE_SPECIAL_USE",
+        "android.permission.NEARBY_WIFI_DEVICES",
+        "android.permission.CAMERA"
+      ],
+      "usesCleartextTraffic": true,
+      "targetSdkVersion": 34,
+      "compileSdkVersion": 34,
+      "navigationBar": {
+        "visible": false,
+        "behavior": "overlay-swipe"
       },
-      "edgeToEdgeEnabled": true
+      "statusBar": {
+        "hidden": true,
+        "translucent": true,
+        "backgroundColor": "transparent"
+      },
+      "softwareKeyboardLayoutMode": "pan",
+      "allowBackup": false
+    },
+    "plugins": [
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Este app precisa acessar a câmera para ler QR codes"
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "8a30e3c9-16da-402a-94a2-c421c127e22e"
+      }
     },
     "web": {
       "favicon": "./assets/favicon.png"
