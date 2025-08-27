@@ -17,7 +17,6 @@ const VideoSplashScreen = ({ onFinish }) => {
   const videoRef = useRef(null);
 
   useEffect(() => {
-    // Garantir que status bar esteja oculta
     StatusBar.setHidden(true, 'none');
     
     // Timeout de segurança - se o vídeo não carregar em 7 segundos (5s + 2s buffer)
@@ -69,12 +68,12 @@ const VideoSplashScreen = ({ onFinish }) => {
       <Video
         ref={videoRef}
         // Para arquivo local na pasta assets:
-        source={require('./assets/splash_video.mp4')}
+        source={require('./assets/voudevolks.mp4')}
         
-        // Para arquivo em recursos Android (descomente se preferir):
+        // Para arquivo em recursos Android
         // source={{ uri: 'android.resource://com.promoapp.app/raw/splash_video' }}
         
-        // Para URL remota (descomente se preferir):
+        // Para URL remota 
         // source={{ uri: 'https://seu-servidor.com/splash_video.mp4' }}
         
         style={styles.video}
