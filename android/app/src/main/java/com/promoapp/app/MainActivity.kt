@@ -10,8 +10,14 @@ import com.facebook.react.defaults.DefaultReactActivityDelegate
 
 import expo.modules.ReactActivityDelegateWrapper
 
+// Importar SplashScreen
+import org.devio.rn.splashscreen.SplashScreen
+
 class MainActivity : ReactActivity() {
   override fun onCreate(savedInstanceState: Bundle?) {
+    // Mostrar splash screen ANTES do super.onCreate()
+    SplashScreen.show(this, true) // true = fullScreen
+    
     // Set the theme to AppTheme BEFORE onCreate to support
     // coloring the background, status bar, and navigation bar.
     // This is required for expo-splash-screen.
