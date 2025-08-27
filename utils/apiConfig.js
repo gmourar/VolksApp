@@ -1,4 +1,4 @@
-import { ConfigStorage } from './configStorage';
+import { ConfigStorage } from './ConfigStorage';
 
 export const API_BASE_URL = 'http://ec2-54-233-101-11.sa-east-1.compute.amazonaws.com:3333';
 

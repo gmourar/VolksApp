@@ -14,7 +14,7 @@ import PasswordModal from '../components/PasswordModal';
 import QRCodeScanner from '../components/QRCodeScanner';
 import SuccessScreen from '../components/SuccessScreen.js';
 import PromoterModal from '../components/PromoterModal';
-import { ConfigStorage } from '../utils/configStorage';
+import { ConfigStorage } from '../utils/ConfigStorage.js';
 import AlreadyDoneScreen from '../components/AlreadyDoneScreen';
 import { testAsyncStorage } from '../utils/testAsyncStorage';
 

@@ -10,7 +10,7 @@ import {
   Platform,
 } from 'react-native';
 import { Camera, CameraView } from 'expo-camera';
-import { ConfigStorage } from '../utils/configStorage';
+import { ConfigStorage } from '../utils/ConfigStorage';
 import { API_BASE_URL } from '../utils/apiConfig';
 
 const { width, height } = Dimensions.get('window');

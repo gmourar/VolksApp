@@ -8,19 +8,28 @@
       "developmentClient": true,
       "distribution": "internal",
       "android": {
-        "buildType": "apk"
+        "buildType": "apk",
+        "env": {
+          "ANDROID_NDK_VERSION": "25.2.9519653"
+        }
       }
     },
     "preview": {
       "distribution": "internal",
       "android": {
-        "buildType": "apk"
+        "buildType": "apk",
+        "env": {
+          "ANDROID_NDK_VERSION": "25.2.9519653"
+        }
       }
     },
     "production": {
       "autoIncrement": true,
       "android": {
-        "buildType": "apk"
+        "buildType": "apk",
+        "env": {
+          "ANDROID_NDK_VERSION": "25.2.9519653"
+        }
       }
     }
   },

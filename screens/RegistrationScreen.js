@@ -14,7 +14,7 @@ import {
 import SuccessScreen from '../components/SuccessScreen.js';
 import AlreadyDoneScreen from '../components/AlreadyDoneScreen';
 import { NetworkPermissions } from '../utils/networkPermissions';
-import { ConfigStorage } from '../utils/configStorage.js';
+import { ConfigStorage } from '../utils/ConfigStorage.js';
 import { API_BASE_URL } from '../utils/apiConfig';
 
 const { width } = Dimensions.get('window');

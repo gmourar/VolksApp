@@ -9,7 +9,7 @@ import {
   Alert,
   Dimensions,
 } from 'react-native';
-import { ConfigStorage } from '../utils/configStorage';
+import { ConfigStorage } from '../utils/ConfigStorage';
 
 const { width, height } = Dimensions.get('window');
 
