@@ -76,7 +76,7 @@ export default function QRCodeScanner({ visible, onClose, onSuccess, onAlreadyDo
   // Gera timestamp ISO 8601 com timezone
   const generateClientAttemptAt = () => {
     // Ajuste para fuso horário de Brasília (UTC-3)
-    const nowBrasilia = new Date(Date.now() - (3 * 60 * 60 * 1000));
+    const nowBrasilia = new Date(Date.now());
     // Força o offset de Brasília
     const iso = nowBrasilia.toISOString().replace('Z', '-03:00');
     return iso;
