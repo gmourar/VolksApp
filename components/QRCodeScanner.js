@@ -21,6 +21,7 @@ export default function QRCodeScanner({ visible, onClose, onSuccess, onAlreadyDo
   const [scanned, setScanned] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [cameraReady, setCameraReady] = useState(false);
+  const [scannedData, setScannedData] = useState(null); // Para armazenar dados do QR lido
   const cameraRef = useRef(null);
   const scanTimeoutRef = useRef(null);
 
@@ -39,6 +40,7 @@ export default function QRCodeScanner({ visible, onClose, onSuccess, onAlreadyDo
     setScanned(false);
     setIsProcessing(false);
     setCameraReady(false);
+    setScannedData(null);
     if (scanTimeoutRef.current) {
       clearTimeout(scanTimeoutRef.current);
     }
@@ -154,29 +156,8 @@ export default function QRCodeScanner({ visible, onClose, onSuccess, onAlreadyDo
     }
   };
 
-  const handleBarCodeScanned = async ({ data, type }) => {
-    // Previne múltiplas leituras
-    if (scanned || isProcessing || !cameraReady) {
-      console.log('Ignorando leitura:', { scanned, isProcessing, cameraReady });
-      return;
-    }
-
-    // Valida se o data não está vazio
-    if (!data || data.trim() === '') {
-      console.log('QR Code vazio ignorado');
-      return;
-    }
-
-    console.log('QR Code lido:', { data, type });
-    setScanned(true);
-    setIsProcessing(true);
-
-    // Timeout para permitir nova leitura caso falhe
-    scanTimeoutRef.current = setTimeout(() => {
-      console.log('Timeout na leitura do QR, resetando estados');
-      resetStates();
-    }, 10000);
-
+  // Função para realizar o registro da atividade
+  const registerActivity = async (data) => {
     try {
       const standName = (await ConfigStorage.getAtividade()) || 'the one';
       const tabletName = (await ConfigStorage.getTabletId()) || 'TABLET_001';
@@ -252,6 +233,68 @@ export default function QRCodeScanner({ visible, onClose, onSuccess, onAlreadyDo
     }
   };
 
+  // Função chamada quando QR é lido - agora só mostra confirmação
+  const handleBarCodeScanned = async ({ data, type }) => {
+    // Previne múltiplas leituras
+    if (scanned || isProcessing || !cameraReady) {
+      console.log('Ignorando leitura:', { scanned, isProcessing, cameraReady });
+      return;
+    }
+
+    // Valida se o data não está vazio
+    if (!data || data.trim() === '') {
+      console.log('QR Code vazio ignorado');
+      return;
+    }
+
+    console.log('QR Code lido:', { data, type });
+    setScanned(true);
+    setScannedData(data.trim());
+
+    // Mostra confirmação antes de registrar
+    Alert.alert(
+      'QR Code Lido com Sucesso!',
+      'Deseja registrar a entrada no estande?',
+      [
+        {
+          text: 'Não',
+          style: 'cancel',
+          onPress: () => {
+            console.log('Usuário optou por não registrar atividade');
+            Alert.alert(
+              'QR Code Verificado', 
+              'QR Code lido com sucesso, mas a atividade não foi registrada.',
+              [
+                {
+                  text: 'OK',
+                  onPress: () => {
+                    resetStates();
+                    // Não fecha o modal, permite continuar lendo
+                  }
+                }
+              ]
+            );
+          }
+        },
+        {
+          text: 'Sim',
+          onPress: async () => {
+            setIsProcessing(true);
+            console.log('Usuário confirmou - registrando atividade');
+            
+            // Timeout para permitir nova leitura caso falhe
+            scanTimeoutRef.current = setTimeout(() => {
+              console.log('Timeout na leitura do QR, resetando estados');
+              resetStates();
+            }, 10000);
+
+            await registerActivity(scannedData);
+          }
+        }
+      ]
+    );
+  };
+
   const handleClose = () => {
     resetStates();
     onClose();
@@ -302,7 +345,7 @@ export default function QRCodeScanner({ visible, onClose, onSuccess, onAlreadyDo
           </TouchableOpacity>
         </View>
 
-        {/* Camera View - VERSÃO CORRIGIDA */}
+        {/* Camera View */}
         <View style={[styles.cameraContainer, { height: cameraHeight }]}>
           <CameraView
             ref={cameraRef}
@@ -329,10 +372,17 @@ export default function QRCodeScanner({ visible, onClose, onSuccess, onAlreadyDo
                 )}
               </View>
               
-              {scanned && (
+              {scanned && !isProcessing && (
                 <View style={styles.successOverlay}>
                   <Text style={styles.successText}>✓ QR Code Lido!</Text>
-                  <Text style={styles.processingText}>Processando...</Text>
+                  <Text style={styles.processingText}>Aguardando confirmação...</Text>
+                </View>
+              )}
+
+              {isProcessing && (
+                <View style={styles.successOverlay}>
+                  <Text style={styles.successText}>✓ QR Code Lido!</Text>
+                  <Text style={styles.processingText}>Registrando atividade...</Text>
                 </View>
               )}
             </View>
@@ -342,11 +392,13 @@ export default function QRCodeScanner({ visible, onClose, onSuccess, onAlreadyDo
         {/* Instructions */}
         <View style={styles.instructions}>
           <Text style={styles.instructionsText}>
-            {scanned 
-              ? 'Processando QR Code...' 
-              : cameraReady 
-                ? 'Posicione o QR code dentro da área verde' 
-                : 'Inicializando câmera...'}
+            {isProcessing 
+              ? 'Registrando atividade...' 
+              : scanned 
+                ? 'QR Code lido! Aguardando confirmação...' 
+                : cameraReady 
+                  ? 'Posicione o QR code dentro da área verde' 
+                  : 'Inicializando câmera...'}
           </Text>
           
           {!scanned && cameraReady && (
