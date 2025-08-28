@@ -263,7 +263,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderWidth: 1,
     borderColor: 'rgba(255, 235, 59, 0.3)',
-    shadowColor: '#FFEB3B',
+    shadowColor: '#e4ff04',
     shadowOffset: {
       width: 0,
       height: 8,
@@ -286,7 +286,7 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontWeight: 'bold',
     marginBottom: 20,
-    color: '#FFEB3B',
+    color: '#e4ff04',
     textAlign: 'center',
   },
   modalTitleTablet: {
@@ -320,9 +320,9 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.05)',
   },
   standButtonActive: {
-    borderColor: '#FFEB3B',
-    backgroundColor: '#FFEB3B',
-    shadowColor: '#FFEB3B',
+    borderColor: '#e4ff04',
+    backgroundColor: '#e4ff04',
+    shadowColor: '#e4ff04',
     shadowOffset: {
       width: 0,
       height: 4,
@@ -387,8 +387,8 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 255, 255, 0.3)',
   },
   saveButton: {
-    backgroundColor: '#FFEB3B',
-    shadowColor: '#FFEB3B',
+    backgroundColor: '#e4ff04',
+    shadowColor: '#e4ff04',
     shadowOffset: {
       width: 0,
       height: 4,

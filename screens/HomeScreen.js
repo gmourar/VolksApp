@@ -356,12 +356,12 @@ const styles = StyleSheet.create({
   
   // Botões admin com gradiente amarelo
   adminButton: {
-    backgroundColor: '#FFEB3B', // Brand yellow
+    backgroundColor: '#e4ff04', // Brand yellow
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 12,
     marginLeft: 10,
-    shadowColor: '#FFEB3B',
+    shadowColor: '#e4ff04',
     shadowOffset: {
       width: 0,
       height: 4,
@@ -474,8 +474,8 @@ const styles = StyleSheet.create({
   
   // Botão primário (Novo Usuário)
   primaryButton: {
-    backgroundColor: '#FFEB3B', // Brand yellow
-    shadowColor: '#FFEB3B',
+    backgroundColor: '#e4ff04', // Brand yellow
+    shadowColor: '#e4ff04',
     shadowOffset: {
       width: 0,
       height: 8,
@@ -489,8 +489,8 @@ const styles = StyleSheet.create({
   secondaryButton: {
     backgroundColor: '#1A1A1A',
     borderWidth: 2,
-    borderColor: '#FFEB3B',
-    shadowColor: '#FFEB3B',
+    borderColor: '#e4ff04',
+    shadowColor: '#e4ff04',
     shadowOffset: {
       width: 0,
       height: 8,
@@ -525,7 +525,7 @@ const styles = StyleSheet.create({
     color: '#000000',
   },
   secondaryButtonText: {
-    color: '#FFEB3B',
+    color: '#e4ff04',
   },
   
   // Subtexto do botão
@@ -535,7 +535,7 @@ const styles = StyleSheet.create({
   },
   buttonSubTextTabletSec: {
     fontSize: 14,
-    color: '#FFEB3B'
+    color: '#e4ff04'
   },
   buttonSubTextMobile: {
     fontSize: 12,
@@ -548,7 +548,7 @@ const styles = StyleSheet.create({
     left: -20,
     right: -20,
     bottom: -20,
-    backgroundColor: '#FFEB3B',
+    backgroundColor: '#e4ff04',
     opacity: 0.1,
     borderRadius: 30,
     zIndex: 1,
@@ -566,7 +566,7 @@ const styles = StyleSheet.create({
     bottom: -20,
   },
   secondaryButtonGlow: {
-    backgroundColor: '#FFEB3B',
+    backgroundColor: '#e4ff04',
     opacity: 0.05,
   },
   

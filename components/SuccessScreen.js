@@ -294,13 +294,13 @@ const styles = StyleSheet.create({
     width: 4,
     height: 4,
     borderRadius: 2,
-    backgroundColor: '#FFEB3B',
+    backgroundColor: '#e4ff04',
   },
   backgroundCircle: {
     position: 'absolute',
     borderRadius: 500,
     borderWidth: 1,
-    borderColor: '#FFEB3B',
+    borderColor: '#e4ff04',
   },
   backgroundCircle1: {
     width: 400,
@@ -332,7 +332,7 @@ const styles = StyleSheet.create({
   },
   glowCircle: {
     position: 'absolute',
-    backgroundColor: '#FFEB3B',
+    backgroundColor: '#e4ff04',
     borderRadius: 100,
   },
   glowCircleTablet: {
@@ -353,8 +353,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 3,
-    borderColor: '#FFEB3B',
-    shadowColor: '#FFEB3B',
+    borderColor: '#e4ff04',
+    shadowColor: '#e4ff04',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.8,
     shadowRadius: 20,
@@ -369,7 +369,7 @@ const styles = StyleSheet.create({
     height: 100,
   },
   checkText: {
-    color: '#FFEB3B',
+    color: '#e4ff04',
     fontWeight: 'bold',
     textAlign: 'center',
   },
@@ -421,9 +421,9 @@ const styles = StyleSheet.create({
   },
   progressFill: {
     height: '100%',
-    backgroundColor: '#FFEB3B',
+    backgroundColor: '#e4ff04',
     borderRadius: 2,
-    shadowColor: '#FFEB3B',
+    shadowColor: '#e4ff04',
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 1,
     shadowRadius: 6,

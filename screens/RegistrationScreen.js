@@ -901,7 +901,7 @@ export default function RegistrationScreen({ navigation, isProductionMode }) {
                 >
                   <View style={styles.buttonContent}>
                     {loading ? (
-                      <ActivityIndicator color="#FFEB3B" size="large" />
+                      <ActivityIndicator color="#e4ff04" size="large" />
                     ) : (
                       <Text style={[
                         styles.buttonText,
@@ -1137,7 +1137,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     textAlign: 'center',
     marginBottom: 40,
-    color: '#FFEB3B',
+    color: '#e4ff04',
   },
   titleTablet: {
     fontSize: 32,
@@ -1202,8 +1202,8 @@ const styles = StyleSheet.create({
 
   // Botão primário (Cadastrar)
   primaryButton: {
-    backgroundColor: '#FFEB3B', // Brand yellow
-    shadowColor: '#FFEB3B',
+    backgroundColor: '#e4ff04', // Brand yellow
+    shadowColor: '#e4ff04',
     shadowOffset: {
       width: 0,
       height: 8,
@@ -1218,8 +1218,8 @@ const styles = StyleSheet.create({
   secondaryButton: {
     backgroundColor: '#1A1A1A',
     borderWidth: 2,
-    borderColor: '#FFEB3B',
-    shadowColor: '#FFEB3B',
+    borderColor: '#e4ff04',
+    shadowColor: '#e4ff04',
     shadowOffset: {
       width: 0,
       height: 8,
@@ -1251,7 +1251,7 @@ const styles = StyleSheet.create({
     color: '#000000',
   },
   secondaryButtonText: {
-    color: '#FFEB3B',
+    color: '#e4ff04',
   },
 
   // Efeito glow nos botões
@@ -1261,7 +1261,7 @@ const styles = StyleSheet.create({
     left: -20,
     right: -20,
     bottom: -20,
-    backgroundColor: '#FFEB3B',
+    backgroundColor: '#e4ff04',
     opacity: 0.1,
     borderRadius: 30,
     zIndex: 1,
@@ -1279,7 +1279,7 @@ const styles = StyleSheet.create({
     bottom: -20,
   },
   secondaryButtonGlow: {
-    backgroundColor: '#FFEB3B',
+    backgroundColor: '#e4ff04',
     opacity: 0.05,
   },
 

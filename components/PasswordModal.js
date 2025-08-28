@@ -160,7 +160,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderWidth: 1,
     borderColor: 'rgba(255, 235, 59, 0.3)',
-    shadowColor: '#FFEB3B',
+    shadowColor: '#e4ff04',
     shadowOffset: {
       width: 0,
       height: 8,
@@ -194,7 +194,7 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontWeight: 'bold',
     marginBottom: 8,
-    color: '#FFEB3B',
+    color: '#e4ff04',
     textAlign: 'center',
   },
   modalTitleTablet: {
@@ -254,8 +254,8 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 255, 255, 0.3)',
   },
   enterButton: {
-    backgroundColor: '#FFEB3B',
-    shadowColor: '#FFEB3B',
+    backgroundColor: '#e4ff04',
+    shadowColor: '#e4ff04',
     shadowOffset: {
       width: 0,
       height: 4,
