@@ -17,6 +17,7 @@ import AlreadyDoneScreen from '../components/AlreadyDoneScreen';
 import { NetworkPermissions } from '../utils/networkPermissions';
 import { ConfigStorage } from '../utils/ConfigStorage.js';
 import { API_BASE_URL } from '../utils/apiConfig';
+import { useHeaderHeight } from '@react-navigation/elements';
 
 const { width } = Dimensions.get('window');
 
@@ -38,6 +39,9 @@ export default function RegistrationScreen({ navigation, isProductionMode }) {
 
   // Detecta se é tablet ou celular baseado na largura da tela
   const isTablet = width >= 768;
+
+  // Altura real do header da stack para evitar sobrepor quando exibimos QR Codes
+  const headerHeight = useHeaderHeight();
 
   useEffect(() => {
     // Verifica permissões de rede ao montar o componente
@@ -843,6 +847,9 @@ export default function RegistrationScreen({ navigation, isProductionMode }) {
 
   const isFormValid = cpf.length === 11 && name.length > 0 && lastName.length > 0 && email.length > 0 && cellphone.length > 0 && dateBirthday.length === 10;
 
+  // Garante espaço no topo igual ao header para que o conteúdo não cubra o header
+  const headerOffsetStyle = { paddingTop: (headerHeight || 0) + 12 };
+
   return (
     <SafeAreaView style={styles.container}>
       {/* Indicação discreta do servidor */}
@@ -863,6 +870,7 @@ export default function RegistrationScreen({ navigation, isProductionMode }) {
       <ScrollView 
         contentContainerStyle={[
           styles.scrollContent,
+          headerOffsetStyle,
           showQRCodes ? styles.scrollContentQR : {}
         ]}
       >
