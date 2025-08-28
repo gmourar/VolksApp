@@ -10,6 +10,7 @@ import {
   Alert,
   ActivityIndicator,
   Dimensions,
+  Image,
 } from 'react-native';
 import SuccessScreen from '../components/SuccessScreen.js';
 import AlreadyDoneScreen from '../components/AlreadyDoneScreen';
@@ -33,6 +34,7 @@ export default function RegistrationScreen({ navigation, isProductionMode }) {
   const [successMessage, setSuccessMessage] = useState('');
   const [alreadyDoneMessage, setAlreadyDoneMessage] = useState('Atividade já realizada.');
   const [networkPermissionGranted, setNetworkPermissionGranted] = useState(false);
+  const [showQRCodes, setShowQRCodes] = useState(false);
 
   // Detecta se é tablet ou celular baseado na largura da tela
   const isTablet = width >= 768;
@@ -262,9 +264,11 @@ export default function RegistrationScreen({ navigation, isProductionMode }) {
 
         if (response.ok && data && data.dados) {
           if (data.dados.existe === false) {
-            setShowOtherFields(true);
+            // Em PRODUÇÃO: mostrar QR Codes ao invés do formulário
+            setShowQRCodes(true);
+            setShowOtherFields(false);
             setShowSuccessScreen(false);
-            console.log('CPF não existe. Abrindo campos para cadastro.');
+            console.log('CPF não existe (PRODUÇÃO). Exibindo QR Codes.');
           } else if (data.dados.existe === true) {
             // Prompt perguntando se deseja registrar a entrada
             Alert.alert(
@@ -300,8 +304,8 @@ export default function RegistrationScreen({ navigation, isProductionMode }) {
                         (typeof status === 'string' && status === 'already') ||
                         (activityError && typeof activityError.message === 'string' && activityError.message.toLowerCase().includes('já registrada'))
                       ) {
-                        setAlreadyDoneMessage('Atividade já realizada.');
-                        setShowAlreadyDoneScreen(true);
+                        setSuccessMessage('Atividade já realizada. Entrada liberada!');
+                        setShowSuccessScreen(true);
                       } else {
                         setSuccessMessage('CPF verificado, mas não foi possível registrar a atividade.');
                         setShowSuccessScreen(true);
@@ -410,8 +414,8 @@ export default function RegistrationScreen({ navigation, isProductionMode }) {
                         ((typeof activityData.erro === 'string' && activityData.erro.toLowerCase().includes('atividade já realizada')) ||
                           (typeof activityData.message === 'string' && activityData.message.toLowerCase().includes('já registrada')))
                       ) {
-                        setAlreadyDoneMessage('Atividade já realizada.');
-                        setShowAlreadyDoneScreen(true);
+                        setSuccessMessage('Atividade já realizada. Entrada liberada!');
+                        setShowSuccessScreen(true);
                       } else {
                         setSuccessMessage('CPF verificado, mas não foi possível registrar a atividade.');
                         setShowSuccessScreen(true);
@@ -617,8 +621,8 @@ export default function RegistrationScreen({ navigation, isProductionMode }) {
                     setSuccessMessage('Usuário cadastrado e entrada registrada com sucesso!');
                     setShowSuccessScreen(true);
                   } else {
-                    setAlreadyDoneMessage('Atividade já realizada.');
-                    setShowAlreadyDoneScreen(true);
+                    setSuccessMessage('Atividade já realizada. Entrada liberada!');
+                    setShowSuccessScreen(true);
                   }
                   console.log("Atividade registrada no estande:", await ConfigStorage.getAtividade());
                 } catch (activityError) {
@@ -863,6 +867,23 @@ export default function RegistrationScreen({ navigation, isProductionMode }) {
           styles.content,
           isTablet ? styles.contentTablet : styles.contentMobile
         ]}>
+          {showQRCodes && (
+            <View style={styles.qrContainerWrapper}>
+              <Text style={[styles.title, isTablet ? styles.titleTablet : styles.titleMobile]}>Aponte a câmera para um dos QR Codes</Text>
+              <View style={styles.qrRow}>
+                <Image
+                  source={{ uri: 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wCEAAkGBxAQEA8QEA8QEA8QEA8PDw8PDw8PDw8PFREWFhURFRUYHSggGBolGxUVITEhJSkrLi4uFx8zODMtNygtLisBCgoKDg0OGxAQGy0lICYtLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLf/AABEIAKAAoAMBIgACEQEDEQH/xAAXAAADAQAAAAAAAAAAAAAAAAAGBwEC/8QAHxAAAQQCAwEAAAAAAAAAAAAAAQACAxExBAUSIVFB/8QAFQEBAQAAAAAAAAAAAAAAAAAAAgP/xAAWEQEBAQAAAAAAAAAAAAAAAAABACH/2gAMAwEAAhEDEQA/APcQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAf/Z' }}
+                  style={styles.qrImage}
+                  resizeMode="contain"
+                />
+                <Image
+                  source={{ uri: 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wCEAAkGBxAQEA8QEA8QEA8QEA8PDw8PDw8PDw8PFREWFhURFRUYHSggGBolGxUVITEhJSkrLi4uFx8zODMtNygtLisBCgoKDg0OGxAQGy0lICYtLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLf/AABEIAKAAoAMBIgACEQEDEQH/xAAXAAADAQAAAAAAAAAAAAAAAAAGBwEC/8QAHxAAAQQCAwEAAAAAAAAAAAAAAQACAxExBAUSIVFB/8QAFQEBAQAAAAAAAAAAAAAAAAAAAgP/xAAWEQEBAQAAAAAAAAAAAAAAAAABACH/2gAMAwEAAhEDEQA/APcQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAf/Z' }}
+                  style={styles.qrImage}
+                  resizeMode="contain"
+                />
+              </View>
+            </View>
+          )}
           <View style={styles.formSection}>
             <Text style={[
               styles.title,
@@ -1311,5 +1332,26 @@ const styles = StyleSheet.create({
   },
   inputSmall: {
     flex: 1,
+  },
+  qrContainerWrapper: {
+    width: '100%',
+    maxWidth: 700,
+    alignItems: 'center',
+    marginBottom: 30,
+  },
+  qrRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    width: '100%',
+  },
+  qrImage: {
+    flex: 1,
+    height: 220,
+    marginHorizontal: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
+    backgroundColor: 'rgba(255,255,255,0.05)',
   },
 });
