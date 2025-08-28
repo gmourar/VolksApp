@@ -841,9 +841,6 @@ export default function RegistrationScreen({ navigation, isProductionMode }) {
     return phoneValue;
   };
 
-
-
-
   const isFormValid = cpf.length === 11 && name.length > 0 && lastName.length > 0 && email.length > 0 && cellphone.length > 0 && dateBirthday.length === 10;
 
   return (
@@ -862,14 +859,22 @@ export default function RegistrationScreen({ navigation, isProductionMode }) {
           </Text>
         </View>
       </View>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      
+      <ScrollView 
+        contentContainerStyle={[
+          styles.scrollContent,
+          showQRCodes ? styles.scrollContentQR : {}
+        ]}
+      >
         <View style={[
           styles.content,
           isTablet ? styles.contentTablet : styles.contentMobile
         ]}>
           {showQRCodes ? (
             <View style={styles.qrContainerWrapper}>
-              <Text style={[styles.title, isTablet ? styles.titleTablet : styles.titleMobile]}>Aponte a câmera para um dos QR Codes</Text>
+              <Text style={[styles.title, isTablet ? styles.titleTablet : styles.titleMobile]}>
+                Aponte a câmera para um dos QR Codes
+              </Text>
               <View style={styles.qrRow}>
                 <Image
                   source={require('../assets/qrcode1.jpeg')}
@@ -892,199 +897,201 @@ export default function RegistrationScreen({ navigation, isProductionMode }) {
                 }}
               >
                 <View style={styles.buttonContent}>
-                  <Text style={[styles.buttonText, styles.secondaryButtonText, isTablet ? styles.buttonTextTablet : styles.buttonTextMobile]}>Verificar novo CPF</Text>
+                  <Text style={[styles.buttonText, styles.secondaryButtonText, isTablet ? styles.buttonTextTablet : styles.buttonTextMobile]}>
+                    Verificar novo CPF
+                  </Text>
                 </View>
                 <View style={[styles.buttonGlow, styles.secondaryButtonGlow, isTablet ? styles.buttonGlowTablet : styles.buttonGlowMobile]} />
               </TouchableOpacity>
             </View>
           ) : (
-          <View style={styles.formSection}>
-            <Text style={[
-              styles.title,
-              isTablet ? styles.titleTablet : styles.titleMobile
-            ]}>Novo Usuário</Text>
-
-            <View style={styles.inputContainer}>
+            <View style={styles.formSection}>
               <Text style={[
-                styles.label,
-                isTablet ? styles.labelTablet : styles.labelMobile
-              ]}>CPF *</Text>
-              <TextInput
-                style={[
-                  styles.input,
-                  isTablet ? styles.inputTablet : styles.inputMobile
-                ]}
-                value={displayCPF(cpf)}
-                onChangeText={formatCPF}
-                placeholder="000.000.000-00"
-                placeholderTextColor="rgba(255, 255, 255, 0.5)"
-                keyboardType="numeric"
-                maxLength={14}
-              />
-              {!showOtherFields && (
-                <TouchableOpacity
+                styles.title,
+                isTablet ? styles.titleTablet : styles.titleMobile
+              ]}>Novo Usuário</Text>
+
+              <View style={styles.inputContainer}>
+                <Text style={[
+                  styles.label,
+                  isTablet ? styles.labelTablet : styles.labelMobile
+                ]}>CPF *</Text>
+                <TextInput
                   style={[
-                    styles.button,
-                    styles.secondaryButton,
-                    isTablet ? styles.buttonTablet : styles.buttonMobile,
-                    loading && styles.disabledButton,
-                    (cpf.length !== 11) && styles.disabledButton,
-                    styles.checkButton
+                    styles.input,
+                    isTablet ? styles.inputTablet : styles.inputMobile
                   ]}
-                  onPress={checkCPF}
-                  disabled={loading || cpf.length !== 11}
-                >
-                  <View style={styles.buttonContent}>
-                    {loading ? (
-                      <ActivityIndicator color="#e4ff04" size="large" />
-                    ) : (
+                  value={displayCPF(cpf)}
+                  onChangeText={formatCPF}
+                  placeholder="000.000.000-00"
+                  placeholderTextColor="rgba(255, 255, 255, 0.5)"
+                  keyboardType="numeric"
+                  maxLength={14}
+                />
+                {!showOtherFields && (
+                  <TouchableOpacity
+                    style={[
+                      styles.button,
+                      styles.secondaryButton,
+                      isTablet ? styles.buttonTablet : styles.buttonMobile,
+                      loading && styles.disabledButton,
+                      (cpf.length !== 11) && styles.disabledButton,
+                      styles.checkButton
+                    ]}
+                    onPress={checkCPF}
+                    disabled={loading || cpf.length !== 11}
+                  >
+                    <View style={styles.buttonContent}>
+                      {loading ? (
+                        <ActivityIndicator color="#e4ff04" size="large" />
+                      ) : (
+                        <Text style={[
+                          styles.buttonText,
+                          styles.secondaryButtonText,
+                          isTablet ? styles.buttonTextTablet : styles.buttonTextMobile
+                        ]}>Verificar CPF</Text>
+                      )}
+                    </View>
+                    <View style={[
+                      styles.buttonGlow,
+                      styles.secondaryButtonGlow,
+                      isTablet ? styles.buttonGlowTablet : styles.buttonGlowMobile
+                    ]} />
+                  </TouchableOpacity>
+                )}
+              </View>
+
+              {showOtherFields && (
+                <>
+                  <View style={[styles.rowContainer, isTablet ? styles.rowContainerTablet : styles.rowContainerMobile]}>
+                    <View style={[styles.inputSubContainer, isTablet ? styles.inputSubContainerTablet : styles.inputSubContainerMobile]}>
                       <Text style={[
-                        styles.buttonText,
-                        styles.secondaryButtonText,
-                        isTablet ? styles.buttonTextTablet : styles.buttonTextMobile
-                      ]}>Verificar CPF</Text>
-                    )}
+                        styles.label,
+                        isTablet ? styles.labelTablet : styles.labelMobile
+                      ]}>Nome *</Text>
+                      <TextInput
+                        style={[
+                          styles.input,
+                          styles.inputSmall,
+                          isTablet ? styles.inputTablet : styles.inputMobile
+                        ]}
+                        value={name}
+                        onChangeText={setName}
+                        placeholder="Digite seu nome"
+                        placeholderTextColor="rgba(255, 255, 255, 0.5)"
+                        autoCapitalize="words"
+                      />
+                    </View>
+                    <View style={[styles.inputSubContainer, isTablet ? styles.inputSubContainerTablet : styles.inputSubContainerMobile]}>
+                      <Text style={[
+                        styles.label,
+                        isTablet ? styles.labelTablet : styles.labelMobile
+                      ]}>Sobrenome *</Text>
+                      <TextInput
+                        style={[
+                          styles.input,
+                          styles.inputSmall,
+                          isTablet ? styles.inputTablet : styles.inputMobile
+                        ]}
+                        value={lastName}
+                        onChangeText={setLastName}
+                        placeholder="Digite seu sobrenome"
+                        placeholderTextColor="rgba(255, 255, 255, 0.5)"
+                        autoCapitalize="words"
+                      />
+                    </View>
                   </View>
-                  <View style={[
-                    styles.buttonGlow,
-                    styles.secondaryButtonGlow,
-                    isTablet ? styles.buttonGlowTablet : styles.buttonGlowMobile
-                  ]} />
-                </TouchableOpacity>
+
+                  <View style={styles.inputContainer}>
+                    <Text style={[
+                      styles.label,
+                      isTablet ? styles.labelTablet : styles.labelMobile
+                    ]}>Email *</Text>
+                    <TextInput
+                      style={[
+                        styles.input,
+                        isTablet ? styles.inputTablet : styles.inputMobile
+                      ]}
+                      value={email}
+                      onChangeText={setEmail}
+                      placeholder="seu@email.com"
+                      placeholderTextColor="rgba(255, 255, 255, 0.5)"
+                      keyboardType="email-address"
+                      autoCapitalize="none"
+                    />
+                  </View>
+
+                  <View style={[styles.rowContainer, isTablet ? styles.rowContainerTablet : styles.rowContainerMobile]}>
+                    <View style={[styles.inputSubContainer, isTablet ? styles.inputSubContainerTablet : styles.inputSubContainerMobile]}>
+                      <Text style={[
+                        styles.label,
+                        isTablet ? styles.labelTablet : styles.labelMobile
+                      ]}>Telefone *</Text>
+                      <TextInput
+                        style={[
+                          styles.input,
+                          styles.inputSmall,
+                          isTablet ? styles.inputTablet : styles.inputMobile
+                        ]}
+                        value={displayPhone(cellphone)}
+                        onChangeText={formatPhone}
+                        placeholder="(11) 99999-9999"
+                        placeholderTextColor="rgba(255, 255, 255, 0.5)"
+                        keyboardType="numeric"
+                        maxLength={15}
+                      />
+                    </View>
+                    <View style={[styles.inputSubContainer, isTablet ? styles.inputSubContainerTablet : styles.inputSubContainerMobile]}>
+                      <Text style={[
+                        styles.label,
+                        isTablet ? styles.labelTablet : styles.labelMobile
+                      ]}>Data de Nascimento *</Text>
+                      <TextInput
+                        style={[
+                          styles.input,
+                          styles.inputSmall,
+                          isTablet ? styles.inputTablet : styles.inputMobile
+                        ]}
+                        value={dateBirthday}
+                        onChangeText={formatDateBirthday}
+                        placeholder="DD/MM/AAAA"
+                        placeholderTextColor="rgba(255, 255, 255, 0.5)"
+                        keyboardType="numeric"
+                        maxLength={10}
+                      />
+                    </View>
+                  </View>
+
+                  <TouchableOpacity
+                    style={[
+                      styles.button,
+                      styles.primaryButton,
+                      isTablet ? styles.buttonTablet : styles.buttonMobile,
+                      loading && styles.disabledButton,
+                      !isFormValid && styles.disabledButton
+                    ]}
+                    onPress={registerUser}
+                    disabled={loading || !isFormValid}
+                  >
+                    <View style={styles.buttonContent}>
+                      {loading ? (
+                        <ActivityIndicator color="#000" size="large" />
+                      ) : (
+                        <Text style={[
+                          styles.buttonText,
+                          styles.primaryButtonText,
+                          isTablet ? styles.buttonTextTablet : styles.buttonTextMobile
+                        ]}>Cadastrar</Text>
+                      )}
+                    </View>
+                    <View style={[
+                      styles.buttonGlow,
+                      isTablet ? styles.buttonGlowTablet : styles.buttonGlowMobile
+                    ]} />
+                  </TouchableOpacity>
+                </>
               )}
             </View>
-
-            {showOtherFields && (
-              <>
-                <View style={[styles.rowContainer, isTablet ? styles.rowContainerTablet : styles.rowContainerMobile]}>
-                  <View style={[styles.inputSubContainer, isTablet ? styles.inputSubContainerTablet : styles.inputSubContainerMobile]}>
-                    <Text style={[
-                      styles.label,
-                      isTablet ? styles.labelTablet : styles.labelMobile
-                    ]}>Nome *</Text>
-                    <TextInput
-                      style={[
-                        styles.input,
-                        styles.inputSmall,
-                        isTablet ? styles.inputTablet : styles.inputMobile
-                      ]}
-                      value={name}
-                      onChangeText={setName}
-                      placeholder="Digite seu nome"
-                      placeholderTextColor="rgba(255, 255, 255, 0.5)"
-                      autoCapitalize="words"
-                    />
-                  </View>
-                  <View style={[styles.inputSubContainer, isTablet ? styles.inputSubContainerTablet : styles.inputSubContainerMobile]}>
-                    <Text style={[
-                      styles.label,
-                      isTablet ? styles.labelTablet : styles.labelMobile
-                    ]}>Sobrenome *</Text>
-                    <TextInput
-                      style={[
-                        styles.input,
-                        styles.inputSmall,
-                        isTablet ? styles.inputTablet : styles.inputMobile
-                      ]}
-                      value={lastName}
-                      onChangeText={setLastName}
-                      placeholder="Digite seu sobrenome"
-                      placeholderTextColor="rgba(255, 255, 255, 0.5)"
-                      autoCapitalize="words"
-                    />
-                  </View>
-                </View>
-
-                <View style={styles.inputContainer}>
-                  <Text style={[
-                    styles.label,
-                    isTablet ? styles.labelTablet : styles.labelMobile
-                  ]}>Email *</Text>
-                  <TextInput
-                    style={[
-                      styles.input,
-                      isTablet ? styles.inputTablet : styles.inputMobile
-                    ]}
-                    value={email}
-                    onChangeText={setEmail}
-                    placeholder="seu@email.com"
-                    placeholderTextColor="rgba(255, 255, 255, 0.5)"
-                    keyboardType="email-address"
-                    autoCapitalize="none"
-                  />
-                </View>
-
-                <View style={[styles.rowContainer, isTablet ? styles.rowContainerTablet : styles.rowContainerMobile]}>
-                  <View style={[styles.inputSubContainer, isTablet ? styles.inputSubContainerTablet : styles.inputSubContainerMobile]}>
-                    <Text style={[
-                      styles.label,
-                      isTablet ? styles.labelTablet : styles.labelMobile
-                    ]}>Telefone *</Text>
-                    <TextInput
-                      style={[
-                        styles.input,
-                        styles.inputSmall,
-                        isTablet ? styles.inputTablet : styles.inputMobile
-                      ]}
-                      value={displayPhone(cellphone)}
-                      onChangeText={formatPhone}
-                      placeholder="(11) 99999-9999"
-                      placeholderTextColor="rgba(255, 255, 255, 0.5)"
-                      keyboardType="numeric"
-                      maxLength={15}
-                    />
-                  </View>
-                  <View style={[styles.inputSubContainer, isTablet ? styles.inputSubContainerTablet : styles.inputSubContainerMobile]}>
-                    <Text style={[
-                      styles.label,
-                      isTablet ? styles.labelTablet : styles.labelMobile
-                    ]}>Data de Nascimento *</Text>
-                    <TextInput
-                      style={[
-                        styles.input,
-                        styles.inputSmall,
-                        isTablet ? styles.inputTablet : styles.inputMobile
-                      ]}
-                      value={dateBirthday}
-                      onChangeText={formatDateBirthday}
-                      placeholder="DD/MM/AAAA"
-                      placeholderTextColor="rgba(255, 255, 255, 0.5)"
-                      keyboardType="numeric"
-                      maxLength={10}
-                    />
-                  </View>
-                </View>
-
-                <TouchableOpacity
-                  style={[
-                    styles.button,
-                    styles.primaryButton,
-                    isTablet ? styles.buttonTablet : styles.buttonMobile,
-                    loading && styles.disabledButton,
-                    !isFormValid && styles.disabledButton
-                  ]}
-                  onPress={registerUser}
-                  disabled={loading || !isFormValid}
-                >
-                  <View style={styles.buttonContent}>
-                    {loading ? (
-                      <ActivityIndicator color="#000" size="large" />
-                    ) : (
-                      <Text style={[
-                        styles.buttonText,
-                        styles.primaryButtonText,
-                        isTablet ? styles.buttonTextTablet : styles.buttonTextMobile
-                      ]}>Cadastrar</Text>
-                    )}
-                  </View>
-                  <View style={[
-                    styles.buttonGlow,
-                    isTablet ? styles.buttonGlowTablet : styles.buttonGlowMobile
-                  ]} />
-                </TouchableOpacity>
-              </>
-            )}
-          </View>
           )}
         </View>
       </ScrollView>
@@ -1117,6 +1124,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
     padding: 12,
     paddingRight: 20,
+    zIndex: 10, // Garante que fique acima do conteúdo
   },
   serverBadge: {
     paddingHorizontal: 12,
@@ -1148,6 +1156,11 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  // Layout específico para QR Codes - remove centralização vertical
+  scrollContentQR: {
+    justifyContent: 'flex-start',
+    paddingTop: 40,
   },
   content: {
     width: '100%',
