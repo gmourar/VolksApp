@@ -2,7 +2,7 @@
   "expo": {
     "name": "VolksApp",
     "slug": "promoapp",
-    "version": "1.0.3",
+    "version": "1.2.0",
     "orientation": "landscape",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -70,6 +70,14 @@
         "expo-camera",
         {
           "cameraPermission": "Este app precisa acessar a câmera para ler QR codes"
+        }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "kotlinVersion": "1.9.24"
+          }
         }
       ]
     ],

@@ -3,11 +3,14 @@ import { StatusBar, Animated, View, ActivityIndicator } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import * as NavigationBar from 'expo-navigation-bar';
-import SplashScreen from 'react-native-splash-screen';
+import * as SplashScreen from 'expo-splash-screen';
 
 import HomeScreen from './screens/HomeScreen.js';
 import RegistrationScreen from './screens/RegistrationScreen';
 import VideoSplashScreen from './VideoSplashScreen'; // Importe o componente
+
+// Prevenir auto-hide da splash nativa
+SplashScreen.preventAutoHideAsync();
 
 const Stack = createStackNavigator();
 
@@ -21,8 +24,8 @@ export default function App() {
     const setupApp = async () => {
       try {
         // Esconder splash nativa rapidamente para mostrar o vídeo
-        setTimeout(() => {
-          SplashScreen.hide();
+        setTimeout(async () => {
+          await SplashScreen.hideAsync();
         }, 100);
 
         // Esconde status bar

@@ -7,7 +7,7 @@ import {
   Text,
   ActivityIndicator,
 } from 'react-native';
-import Video from 'react-native-video';
+import { Video } from 'expo-av';
 
 const { width, height } = Dimensions.get('window');
 
@@ -18,8 +18,8 @@ const VideoSplashScreen = ({ onFinish }) => {
 
   useEffect(() => {
     StatusBar.setHidden(true, 'none');
-    
-    // Timeout de segurança - se o vídeo não carregar em 7 segundos (5s + 2s buffer)
+
+    // Timeout de segurança (7s)
     const timeout = setTimeout(() => {
       if (isLoading) {
         console.log('Timeout do vídeo splash - forçando finalização');
@@ -31,17 +31,16 @@ const VideoSplashScreen = ({ onFinish }) => {
     return () => clearTimeout(timeout);
   }, [isLoading, onFinish]);
 
-  const handleVideoLoad = (data) => {
-    console.log('Vídeo carregado:', data);
+  const handleVideoLoad = (status) => {
+    console.log('Vídeo carregado:', status);
     setIsLoading(false);
   };
 
   const handleVideoEnd = () => {
-    console.log('Vídeo de 5 segundos terminou');
-    // Transição mais rápida já que o vídeo tem duração certa
+    console.log('Vídeo de splash terminou');
     setTimeout(() => {
       onFinish();
-    }, 200); // Delay mínimo para transição suave
+    }, 200);
   };
 
   const handleVideoError = (error) => {
@@ -51,7 +50,6 @@ const VideoSplashScreen = ({ onFinish }) => {
   };
 
   if (hasError) {
-    // Fallback se o vídeo não carregar
     return (
       <View style={styles.fallbackContainer}>
         <Text style={styles.fallbackText}>PromoApp</Text>
@@ -63,31 +61,26 @@ const VideoSplashScreen = ({ onFinish }) => {
   return (
     <View style={styles.container}>
       <StatusBar hidden />
-      
-      {/* Vídeo de splash */}
+
       <Video
         ref={videoRef}
-        // Para arquivo local na pasta assets:
-        source={require('./assets/voudevolks.mp4')}
-        
-        // Para arquivo em recursos Android
-        // source={{ uri: 'android.resource://com.promoapp.app/raw/splash_video' }}
-        
-        // Para URL remota 
-        // source={{ uri: 'https://seu-servidor.com/splash_video.mp4' }}
-        
+        source={require('./assets/voudevolksplash.mp4')}
         style={styles.video}
         resizeMode="cover"
-        repeat={false}
-        muted={true}
+        shouldPlay
+        isLooping={false}
+        isMuted
         onLoad={handleVideoLoad}
-        onEnd={handleVideoEnd}
-        onError={handleVideoError}
-        playInBackground={false}
-        playWhenInactive={false}
+        onPlaybackStatusUpdate={(status) => {
+          if (status.didJustFinish) {
+            handleVideoEnd();
+          }
+          if (status.error) {
+            handleVideoError(status.error);
+          }
+        }}
       />
 
-      {/* Loader enquanto o vídeo carrega */}
       {isLoading && (
         <View style={styles.loadingOverlay}>
           <ActivityIndicator size="large" color="#FFFFFF" />

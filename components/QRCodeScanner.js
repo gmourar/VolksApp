@@ -192,7 +192,7 @@ export default function QRCodeScanner({ visible, onClose, onSuccess, onAlreadyDo
           method: 'qrcode',
           stand_name: standName.toLowerCase(),
           tablet_name: tabletName,
-          client_attempt_at: generateClientAttemptAt(),
+          client_created_at: generateClientAttemptAt(),
         });
 
         response = await fetch(`${API_BASE_URL}/activity/validate`, {

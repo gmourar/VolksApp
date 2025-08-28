@@ -139,12 +139,16 @@ export default function PromoterModal({ visible, onClose, isProductionMode, onTo
                 </Text>
               </TouchableOpacity>
 
+              
               <TouchableOpacity 
-                style={[styles.button, styles.logoutButton]} 
+                style={styles.exitButton} 
                 onPress={handleClose}
                 activeOpacity={0.8}
               >
-                <Text style={styles.logoutButtonText}>Sair</Text>
+                <View style={styles.exitButtonContent}>
+                  
+                  <Text style={styles.exitButtonText}>Sair</Text>
+                </View>
               </TouchableOpacity>
             </View>
           )}
@@ -349,11 +353,38 @@ const styles = StyleSheet.create({
     backgroundColor: '#2196F3',
     shadowColor: '#2196F3',
   },
-  logoutButton: {
-    backgroundColor: 'transparent',
-    borderWidth: 2,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
-    width: '60%',
+  // Novo estilo para o botão Sair
+  exitButton: {
+    borderColor: '#FF5722',
+    borderWidth:2,
+    paddingVertical: 16,
+    paddingHorizontal: 40,
+    borderRadius: 12,
+    marginTop: 10,
+    minWidth: 120,
+    shadowColor: '#FF5722',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  exitButtonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  exitButtonIcon: {
+    fontSize: 18,
+  },
+  exitButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '700',
+    textAlign: 'center',
   },
   cancelButtonText: {
     color: 'rgba(255, 255, 255, 0.9)',
@@ -370,13 +401,5 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
     textAlign: 'center',
-  },
-  logoutButtonText: {
-    color: '#FFEB3B',
-    fontSize: 16,
-    fontWeight: '700',
-    textShadowColor: 'rgba(0,0,0,0.7)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
   },
 });
