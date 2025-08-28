@@ -547,7 +547,7 @@ export default function RegistrationScreen({ navigation, isProductionMode }) {
       console.log(`URL: ${API_BASE_URL}/register`);
 
       // Ajuste para fuso horário de Brasília (UTC-3)
-      const nowBrasilia = new Date(Date.now() - (3 * 60 * 60 * 1000));
+      const nowBrasilia = new Date(Date.now());
       const startTime = nowBrasilia.getTime();
 
       const response = await fetch(`${API_BASE_URL}/register`, {
@@ -562,7 +562,7 @@ export default function RegistrationScreen({ navigation, isProductionMode }) {
         signal: createTimeoutSignal(30000), // 30 segundos
       });
 
-      const endBrasilia = new Date(Date.now() - (3 * 60 * 60 * 1000));
+      const endBrasilia = new Date(Date.now());
       const endTime = endBrasilia.getTime();
       const requestDuration = endTime - startTime;
 
@@ -676,7 +676,7 @@ export default function RegistrationScreen({ navigation, isProductionMode }) {
       console.log('URL:', localUrl);
 
       // Ajuste para fuso horário de Brasília (UTC-3)
-      const nowBrasilia = new Date(Date.now() - (3 * 60 * 60 * 1000));
+      const nowBrasilia = new Date(Date.now());
       const startTime = nowBrasilia.getTime();
 
       let response;
@@ -700,7 +700,7 @@ export default function RegistrationScreen({ navigation, isProductionMode }) {
         throw err;
       }
 
-      const endBrasilia = new Date(Date.now() - (3 * 60 * 60 * 1000));
+      const endBrasilia = new Date(Date.now());
       const endTime = endBrasilia.getTime();
       const requestDuration = endTime - startTime;
 
