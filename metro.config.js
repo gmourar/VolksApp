@@ -13,13 +13,3 @@ config.server = {
 };
 
 module.exports = config;
-
-// Permitir carregar imagens .jfif
-try {
-  const assetExts = config.resolver.assetExts || [];
-  if (!assetExts.includes('jfif')) {
-    config.resolver.assetExts = [...assetExts, 'jfif'];
-  }
-} catch (e) {
-  // noop
-}
