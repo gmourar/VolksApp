@@ -212,6 +212,20 @@ export default function RegistrationScreen({ navigation, isProductionMode }) {
     return controller.signal;
   };
 
+  // Utilitário para montar mensagens de erro detalhadas
+  const buildErrorMessage = (context, options = {}) => {
+    const { status, data, error } = options;
+    let base = context ? `${context}` : 'Erro na requisição';
+    const parts = [];
+    if (typeof status === 'number') parts.push(`HTTP ${status}`);
+    const extracted =
+      (data && (data.erros && (data.erros.erro || Object.values(data.erros)[0]))) ||
+      (data && (data.erro || data.message)) ||
+      (error && error.message);
+    if (extracted) parts.push(extracted);
+    return parts.length ? `${base}: ${parts.join(' - ')}` : base;
+  };
+
 
 
   // Função para verificar CPF
@@ -327,7 +341,8 @@ export default function RegistrationScreen({ navigation, isProductionMode }) {
           setShowOtherFields(true);
           console.log('CPF não encontrado (400). Abrindo campos para cadastro.');
         } else {
-          Alert.alert('Erro', 'Erro ao verificar CPF. Tente novamente.');
+          const msg = buildErrorMessage('Falha ao verificar CPF (produção)', { status: response.status, data });
+          Alert.alert('Erro', msg);
         }
       } else {
         // Modo LOCAL - verifica no servidor local
@@ -438,12 +453,14 @@ export default function RegistrationScreen({ navigation, isProductionMode }) {
             Alert.alert('Atenção', 'Resposta inesperada do servidor local.');
           }
         } else {
-          Alert.alert('Erro', 'Erro ao verificar CPF local. Tente novamente.');
+          const msg = buildErrorMessage('Falha ao verificar CPF (local)', { status: response.status, data });
+          Alert.alert('Erro', msg);
         }
       }
     } catch (error) {
       console.log('Erro na verificação do CPF:', error);
-      Alert.alert('Erro de Conexão', 'Verifique sua conexão de rede e tente novamente.');
+      const msg = buildErrorMessage('Erro de conexão ao verificar CPF', { error });
+      Alert.alert('Erro de Conexão', msg);
     } finally {
       setLoading(false);
     }
@@ -514,11 +531,8 @@ export default function RegistrationScreen({ navigation, isProductionMode }) {
 
     } catch (error) {
       console.log('Erro geral no cadastro:', error);
-      Alert.alert(
-        'Erro de Conexão',
-        `Erro ao conectar ao servidor ${isProductionMode ? 'de produção' : 'local'}. Tente novamente.`,
-        [{ text: 'OK' }]
-      );
+      const msg = buildErrorMessage(`Erro ao conectar ao servidor ${isProductionMode ? 'de produção' : 'local'}`, { error });
+      Alert.alert('Erro de Conexão', msg, [{ text: 'OK' }]);
     } finally {
       setLoading(false);
     }
@@ -636,17 +650,10 @@ export default function RegistrationScreen({ navigation, isProductionMode }) {
         );
       } else {
         console.log(`Response não OK: ${response.status}`);
-
-        try {
-          const errorData = await response.json();
-          console.log('Error Response Data:', errorData);
-          Alert.alert('Erro', errorData.message || 'Erro ao cadastrar usuário na produção');
-        } catch (jsonError) {
-          console.log('Erro ao fazer parse do JSON de erro:', jsonError);
-          const errorText = await response.text();
-          console.log('Error Response Text:', errorText);
-          Alert.alert('Erro', `Erro no servidor de produção (${response.status})`);
-        }
+        let errorData = null;
+        try { errorData = await response.json(); } catch (_) { /* ignore */ }
+        const msg = buildErrorMessage('Erro ao cadastrar usuário na produção', { status: response.status, data: errorData });
+        Alert.alert('Erro', msg);
       }
 
     } catch (error) {
@@ -775,17 +782,10 @@ export default function RegistrationScreen({ navigation, isProductionMode }) {
         );
       } else {
         console.log(`Response não OK: ${response.status}`);
-
-        try {
-          const errorData = await response.json();
-          console.log('Error Response Data:', errorData);
-          Alert.alert('Erro', errorData.message || 'Erro ao cadastrar usuário localmente');
-        } catch (jsonError) {
-          console.log('Erro ao fazer parse do JSON de erro:', jsonError);
-          const errorText = await response.text();
-          console.log('Error Response Text:', errorText);
-          Alert.alert('Erro', `Erro no servidor local (${response.status})`);
-        }
+        let errorData = null;
+        try { errorData = await response.json(); } catch (_) { /* ignore */ }
+        const msg = buildErrorMessage('Erro ao cadastrar usuário localmente', { status: response.status, data: errorData });
+        Alert.alert('Erro', msg);
       }
 
     } catch (error) {
@@ -867,23 +867,37 @@ export default function RegistrationScreen({ navigation, isProductionMode }) {
           styles.content,
           isTablet ? styles.contentTablet : styles.contentMobile
         ]}>
-          {showQRCodes && (
+          {showQRCodes ? (
             <View style={styles.qrContainerWrapper}>
               <Text style={[styles.title, isTablet ? styles.titleTablet : styles.titleMobile]}>Aponte a câmera para um dos QR Codes</Text>
               <View style={styles.qrRow}>
                 <Image
-                  source={{ uri: '.assets/qrcode1.jpeg' }}
-                  style={styles.qrImage}
+                  source={require('../assets/qrcode1.jpeg')}
+                  style={[styles.qrImage, isTablet ? styles.qrImageTablet : styles.qrImageMobile]}
                   resizeMode="contain"
                 />
                 <Image
-                  source={{ uri: '.assets/qrcode2.jpeg' }}
-                  style={styles.qrImage}
+                  source={require('../assets/qrcode2.jpeg')}
+                  style={[styles.qrImage, isTablet ? styles.qrImageTablet : styles.qrImageMobile]}
                   resizeMode="contain"
                 />
               </View>
+              <TouchableOpacity
+                style={[styles.button, styles.secondaryButton, isTablet ? styles.buttonTablet : styles.buttonMobile, styles.qrResetButton]}
+                onPress={() => {
+                  setShowQRCodes(false);
+                  setShowOtherFields(false);
+                  setShowSuccessScreen(false);
+                  setCpf('');
+                }}
+              >
+                <View style={styles.buttonContent}>
+                  <Text style={[styles.buttonText, styles.secondaryButtonText, isTablet ? styles.buttonTextTablet : styles.buttonTextMobile]}>Verificar novo CPF</Text>
+                </View>
+                <View style={[styles.buttonGlow, styles.secondaryButtonGlow, isTablet ? styles.buttonGlowTablet : styles.buttonGlowMobile]} />
+              </TouchableOpacity>
             </View>
-          )}
+          ) : (
           <View style={styles.formSection}>
             <Text style={[
               styles.title,
@@ -1071,6 +1085,7 @@ export default function RegistrationScreen({ navigation, isProductionMode }) {
               </>
             )}
           </View>
+          )}
         </View>
       </ScrollView>
 
@@ -1347,11 +1362,21 @@ const styles = StyleSheet.create({
   },
   qrImage: {
     flex: 1,
-    height: 220,
+    height: 320,
     marginHorizontal: 10,
     borderRadius: 12,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.2)',
     backgroundColor: 'rgba(255,255,255,0.05)',
+  },
+  qrImageTablet: {
+    height: 420,
+  },
+  qrImageMobile: {
+    height: 300,
+  },
+  qrResetButton: {
+    marginTop: 25,
+    width: '70%',
   },
 });
