@@ -127,6 +127,18 @@ export default function QRCodeScanner({ visible, onClose, onSuccess, onAlreadyDo
     return 'error';
   };
 
+  const buildErrorMessage = (context, { status, data, error } = {}) => {
+    const parts = [];
+    if (typeof status === 'number') parts.push(`HTTP ${status}`);
+    const extracted =
+      (data && (data.erros && (data.erros.erro || Object.values(data.erros)[0]))) ||
+      (data && (data.erro || data.message)) ||
+      (error && error.message);
+    if (extracted) parts.push(extracted);
+    const suffix = parts.length ? `: ${parts.join(' - ')}` : '';
+    return `${context}${suffix}`;
+  };
+
   // Função para executar ação baseada no resultado
   const executeAction = (result) => {
     console.log('EXECUTANDO AÇÃO:', result);
@@ -185,7 +197,12 @@ export default function QRCodeScanner({ visible, onClose, onSuccess, onAlreadyDo
           },
           body: prodBody,
         });
-        
+        if (!response.ok) {
+          let errData = null;
+          try { errData = await response.json(); } catch (_) { /* ignore */ }
+          const msg = buildErrorMessage('Falha ao validar atividade (produção)', { status: response.status, data: errData });
+          Alert.alert('Erro', msg);
+        }
         responseData = await response.json().catch(() => null);
         console.log('Resposta PRODUÇÃO:', responseData);
         
@@ -213,7 +230,12 @@ export default function QRCodeScanner({ visible, onClose, onSuccess, onAlreadyDo
           },
           body: localBody,
         });
-        
+        if (!response.ok) {
+          let errData = null;
+          try { errData = await response.json(); } catch (_) { /* ignore */ }
+          const msg = buildErrorMessage('Falha ao validar atividade (local)', { status: response.status, data: errData });
+          Alert.alert('Erro', msg);
+        }
         responseData = await response.json().catch(() => null);
         console.log('Resposta LOCAL:', responseData);
       }
@@ -225,11 +247,8 @@ export default function QRCodeScanner({ visible, onClose, onSuccess, onAlreadyDo
     } catch (error) {
       console.error('Erro ao processar QR Code:', error);
       resetStates();
-      Alert.alert(
-        'Erro de Conexão',
-        'Não foi possível conectar ao servidor. Tente novamente.',
-        [{ text: 'OK', style: 'default' }]
-      );
+      const msg = buildErrorMessage('Erro de conexão ao validar atividade', { error });
+      Alert.alert('Erro de Conexão', msg, [{ text: 'OK', style: 'default' }]);
     }
   };
 
