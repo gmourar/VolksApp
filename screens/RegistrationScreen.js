@@ -24,11 +24,13 @@ const { width, height } = Dimensions.get('window');
 
 export default function RegistrationScreen({ navigation, isProductionMode }) {
   const [cpf, setCpf] = useState('');
+  const [passport, setPassport] = useState('');
   const [name, setName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [cellphone, setCellphone] = useState('');
   const [dateBirthday, setDateBirthday] = useState('');
+  const [isBrazilian, setIsBrazilian] = useState(true);
   const [showOtherFields, setShowOtherFields] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showSuccessScreen, setShowSuccessScreen] = useState(false);
@@ -104,22 +106,26 @@ export default function RegistrationScreen({ navigation, isProductionMode }) {
     }
   };
 
-  // Registrar atividade do CPF no estande/atividade configurado
+  // Registrar atividade no estande/atividade configurado
   const registerActivity = async () => {
     try {
       const standName = (await ConfigStorage.getAtividade()) || 'the one';
       const tabletName = await ConfigStorage.getTabletId();
       
       const prodBody = JSON.stringify({
-        cpf: displayCPF(cpf),
-        method: "cpf",
+        is_foreign: !isBrazilian,
+        id_type: isBrazilian ? 'cpf' : 'passport',
+        id_number: isBrazilian ? cpf : passport,
+        method: 'cpf',
         stand_name: standName.toLowerCase(),
         tablet_name: tabletName,
         client_validated_at: generateClientCreatedAt(),
       });
       const localBody = JSON.stringify({
-        cpf: displayCPF(cpf),
-        method: "cpf",
+        is_foreign: !isBrazilian,
+        id_type: isBrazilian ? 'cpf' : 'passport',
+        id_number: isBrazilian ? cpf : passport,
+        method: 'cpf',
         stand_name: standName.toLowerCase(),
         tablet_name: tabletName,
         client_validated_at: generateClientCreatedAt(),
@@ -153,7 +159,7 @@ export default function RegistrationScreen({ navigation, isProductionMode }) {
         console.log('Modo LOCAL - registrando atividade no servidor local');
         const baseUrl = (await ConfigStorage.getLocalBaseUrl()) || 'http://192.168.0.34:8000';
         const normalizedBaseUrl = baseUrl.replace(/\/$/, '');
-        const localUrl = `${normalizedBaseUrl}/registrar-atividade`;
+        const localUrl = `${normalizedBaseUrl}/activity/validate`;
         try {
           response = await fetch(localUrl, {
             method: 'POST',
@@ -165,8 +171,8 @@ export default function RegistrationScreen({ navigation, isProductionMode }) {
             signal: createTimeoutSignal(15000),
           });
         } catch (err) {
-          console.log('[ERRO DE CONEXÃO LOCALHOST - registrar-atividade]', err);
-          Alert.alert('Erro ao conectar no backend local', `Não foi possível acessar o endpoint /registrar-atividade.\n\nMotivo: ${err && err.message ? err.message : err}`);
+          console.log('[ERRO DE CONEXÃO LOCALHOST - activity/validate]', err);
+          Alert.alert('Erro ao conectar no backend local', `Não foi possível acessar o endpoint /activity/validate.\n\nMotivo: ${err && err.message ? err.message : err}`);
           throw err;
         }
       }
@@ -224,9 +230,16 @@ export default function RegistrationScreen({ navigation, isProductionMode }) {
   };
 
   const checkCPF = async () => {
-    if (cpf.length !== 11) {
-      Alert.alert('Erro', 'CPF deve ter 11 dígitos');
-      return;
+    if (isBrazilian) {
+      if (cpf.length !== 11) {
+        Alert.alert('Erro', 'CPF deve ter 11 dígitos');
+        return;
+      }
+    } else {
+      if (!passport || passport.trim().length === 0) {
+        Alert.alert('Erro', 'Informe o número do passaporte');
+        return;
+      }
     }
 
     if (!networkPermissionGranted) {
@@ -242,7 +255,7 @@ export default function RegistrationScreen({ navigation, isProductionMode }) {
     }
 
     setLoading(true);
-    console.log('Verificando CPF:', cpf);
+    console.log('Verificando documento:', isBrazilian ? cpf : passport);
     console.log(`Modo selecionado: ${isProductionMode ? 'PRODUÇÃO' : 'LOCAL'}`);
 
     try {
@@ -251,7 +264,22 @@ export default function RegistrationScreen({ navigation, isProductionMode }) {
       const tabletName = await ConfigStorage.getTabletId();
 
       if (isProductionMode) {
-        console.log('Modo PRODUÇÃO - verificando CPF na API de produção');
+        console.log('Modo PRODUÇÃO - verificando documento na API de produção');
+        const prodBody = isBrazilian ? {
+          cpf: displayCPF(cpf),
+          is_foreign: false,
+          id_type: 'cpf',
+          stand_name: standName.toLowerCase(),
+          tablet_name: tabletName,
+          client_checked_at: generateClientCreatedAt(),
+        } : {
+          is_foreign: true,
+          id_type: 'passport',
+          id_number: passport,
+          stand_name: standName.toLowerCase(),
+          tablet_name: tabletName,
+          client_checked_at: generateClientCreatedAt(),
+        };
         response = await fetch(`${API_BASE_URL}/cpf/status`, {
           method: 'POST',
           headers: {
@@ -259,12 +287,7 @@ export default function RegistrationScreen({ navigation, isProductionMode }) {
             'Accept': 'application/json',
             'Token': 'f8331af6befa173f8cec0bc46df542',
           },
-          body: JSON.stringify({ 
-            cpf: displayCPF(cpf),
-            stand_name: standName.toLowerCase(),
-            tablet_name: tabletName,
-            client_checked_at: generateClientCreatedAt(), 
-          }),
+          body: JSON.stringify(prodBody),
         });
 
         console.log('CPF Check Response Status:', response.status);
@@ -273,13 +296,20 @@ export default function RegistrationScreen({ navigation, isProductionMode }) {
 
         if (response.ok && data && data.dados) {
           if (data.dados.existe === false) {
-            setShowQRCodes(true);
-            setShowOtherFields(false);
-            setShowSuccessScreen(false);
-            console.log('CPF não existe (PRODUÇÃO). Exibindo QR Codes.');
+            if (isBrazilian) {
+              setShowQRCodes(true);
+              setShowOtherFields(false);
+              setShowSuccessScreen(false);
+              console.log('CPF não existe (PRODUÇÃO). Exibindo QR Codes.');
+            } else {
+              setShowOtherFields(true);
+              setShowQRCodes(false);
+              setShowSuccessScreen(false);
+              console.log('Passaporte não existe (PRODUÇÃO). Abrindo formulário.');
+            }
           } else if (data.dados.existe === true) {
             Alert.alert(
-              'CPF Verificado com Sucesso!',
+              isBrazilian ? 'CPF Verificado com Sucesso!' : 'Documento verificado com sucesso!',
               'Deseja registrar a entrada no estande?',
               [
                 {
@@ -287,7 +317,7 @@ export default function RegistrationScreen({ navigation, isProductionMode }) {
                   style: 'cancel',
                   onPress: () => {
                     console.log('Usuário optou por não registrar atividade');
-                    Alert.alert('Verificado', 'CPF verificado com sucesso.', [
+                    Alert.alert('Verificado', isBrazilian ? 'CPF verificado com sucesso.' : 'Documento verificado com sucesso.', [
                       {
                         text: 'OK',
                         onPress: () => {
@@ -305,7 +335,7 @@ export default function RegistrationScreen({ navigation, isProductionMode }) {
                       const status = await registerActivity();
                       setShowOtherFields(false);
                       if (status === 'ok') {
-                        setSuccessMessage('CPF verificado e atividade registrada com sucesso!');
+                        setSuccessMessage(isBrazilian ? 'CPF verificado e atividade registrada com sucesso!' : 'Documento verificado e atividade registrada com sucesso!');
                         setShowSuccessScreen(true);
                       } else if (
                         (typeof status === 'string' && status === 'already') ||
@@ -314,7 +344,7 @@ export default function RegistrationScreen({ navigation, isProductionMode }) {
                         setSuccessMessage('Atividade já realizada. Entrada liberada!');
                         setShowSuccessScreen(true);
                       } else {
-                        setSuccessMessage('CPF verificado, mas não foi possível registrar a atividade.');
+                        setSuccessMessage(isBrazilian ? 'CPF verificado, mas não foi possível registrar a atividade.' : 'Documento verificado, mas não foi possível registrar a atividade.');
                         setShowSuccessScreen(true);
                       }
                       console.log('Atividade registrada no estande:', await ConfigStorage.getAtividade());
@@ -330,36 +360,54 @@ export default function RegistrationScreen({ navigation, isProductionMode }) {
             Alert.alert('Atenção', 'Resposta inesperada do servidor.');
           }
         } else if (response.status === 400) {
-          setShowOtherFields(true);
-          console.log('CPF não encontrado (400). Abrindo campos para cadastro.');
+          if (isBrazilian) {
+            setShowQRCodes(true);
+            setShowOtherFields(false);
+            console.log('CPF não encontrado (400). Exibindo QR Codes.');
+          } else {
+            setShowOtherFields(true);
+            setShowQRCodes(false);
+            console.log('Passaporte não encontrado (400). Abrindo campos para cadastro.');
+          }
         } else {
           const msg = buildErrorMessage('Falha ao verificar CPF (produção)', { status: response.status, data });
           Alert.alert('Erro', msg);
         }
       } else {
-        console.log('Modo LOCAL - verificando CPF no servidor local');
+        console.log('Modo LOCAL - verificando documento no servidor local');
         const baseUrl = (await ConfigStorage.getLocalBaseUrl()) || 'http://192.168.0.34:8000';
         const normalizedBaseUrl = baseUrl.replace(/\/$/, '');
-        const localUrl = `${normalizedBaseUrl}/verificar-cpf`;
+        const localUrl = `${normalizedBaseUrl}/cpf/status`;
 
         const standName = (await ConfigStorage.getAtividade()) || 'the one';
         const tabletName = (await ConfigStorage.getTabletId()) || '';
         try {
+          const localBody = isBrazilian ? {
+            cpf: displayCPF(cpf),
+            is_foreign: false,
+            id_type: 'cpf',
+            stand_name: standName.toLowerCase(),
+            tablet_name: tabletName,
+            client_checked_at: generateClientCreatedAt(),
+          } : {
+            is_foreign: true,
+            id_type: 'passport',
+            id_number: passport,
+            stand_name: standName.toLowerCase(),
+            tablet_name: tabletName,
+            client_checked_at: generateClientCreatedAt(),
+          };
           response = await fetch(localUrl, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
               'Accept': 'application/json',
             },
-            body: JSON.stringify({
-              cpf: cpf,
-              stand_name: standName.toLowerCase(),
-              tablet_name: tabletName,
-            }),
+            body: JSON.stringify(localBody),
           });
         } catch (err) {
-          console.log('[ERRO DE CONEXÃO LOCALHOST - verificar-cpf]', err);
-          Alert.alert('Erro ao conectar no backend local', `Não foi possível acessar o endpoint /verificar-cpf.\n\nMotivo: ${err && err.message ? err.message : err}`);
+          console.log('[ERRO DE CONEXÃO LOCALHOST - cpf/status]', err);
+          Alert.alert('Erro ao conectar no backend local', `Não foi possível acessar o endpoint /cpf/status.\n\nMotivo: ${err && err.message ? err.message : err}`);
           throw err;
         }
 
@@ -368,16 +416,17 @@ export default function RegistrationScreen({ navigation, isProductionMode }) {
         console.log('CPF Check Response Body (LOCAL):', data);
 
         if (response.ok && data) {
-          if (data.status === 'success' && data.usuario) {
+          const exists = (data.dados && data.dados.existe === true) || (data.status === 'success' && !!data.usuario);
+          if (exists) {
             Alert.alert(
-              'CPF encontrado!',
+              isBrazilian ? 'CPF encontrado!' : 'Documento encontrado!',
               'Deseja registrar uma atividade para este usuário?',
               [
                 {
                   text: 'Não',
                   style: 'cancel',
                   onPress: () => {
-                    setSuccessMessage('CPF verificado com sucesso!');
+                    setSuccessMessage(isBrazilian ? 'CPF verificado com sucesso!' : 'Documento verificado com sucesso!');
                     setShowSuccessScreen(true);
                   }
                 },
@@ -388,13 +437,15 @@ export default function RegistrationScreen({ navigation, isProductionMode }) {
                       const standName = (await ConfigStorage.getAtividade()) || 'the one';
                       const tabletName = (await ConfigStorage.getTabletId()) || '';
                       const activityBody = JSON.stringify({
-                        cpf: cpf,
+                        is_foreign: !isBrazilian,
+                        id_type: isBrazilian ? 'cpf' : 'passport',
+                        id_number: isBrazilian ? cpf : passport,
                         method: 'cpf',
                         stand_name: standName.toLowerCase(),
                         tablet_name: tabletName,
-                        client_attempt_at: generateClientCreatedAt(),
+                        client_validated_at: generateClientCreatedAt(),
                       });
-                      const activityUrl = `${normalizedBaseUrl}/activity`;
+                      const activityUrl = `${normalizedBaseUrl}/activity/validate`;
                       const activityResp = await fetch(activityUrl, {
                         method: 'POST',
                         headers: {
@@ -410,7 +461,7 @@ export default function RegistrationScreen({ navigation, isProductionMode }) {
                         activityResp.ok && activityData &&
                         (activityData.sucesso === true || activityData.status === 'success')
                       ) {
-                        setSuccessMessage('CPF verificado e atividade registrada com sucesso!');
+                        setSuccessMessage(isBrazilian ? 'CPF verificado e atividade registrada com sucesso!' : 'Documento verificado e atividade registrada com sucesso!');
                         setShowSuccessScreen(true);
                       } else if (
                         activityData &&
@@ -421,22 +472,26 @@ export default function RegistrationScreen({ navigation, isProductionMode }) {
                         setSuccessMessage('Atividade já realizada. Entrada liberada!');
                         setShowSuccessScreen(true);
                       } else {
-                        setSuccessMessage('CPF verificado, mas não foi possível registrar a atividade.');
+                        setSuccessMessage(isBrazilian ? 'CPF verificado, mas não foi possível registrar a atividade.' : 'Documento verificado, mas não foi possível registrar a atividade.');
                         setShowSuccessScreen(true);
                       }
                     } catch (activityError) {
                       console.log('Erro ao registrar atividade (local):', activityError);
-                      setSuccessMessage('CPF verificado, mas não foi possível registrar a atividade.');
+                      setSuccessMessage(isBrazilian ? 'CPF verificado, mas não foi possível registrar a atividade.' : 'Documento verificado, mas não foi possível registrar a atividade.');
                       setShowSuccessScreen(true);
                     }
                   }
                 }
               ]
             );
-          } else if (data.status === 'error' && data.message && data.message.toLowerCase().includes('não encontrado')) {
+          } else if (
+            (data && data.status === 'error' && data.message && data.message.toLowerCase().includes('não encontrado')) ||
+            (data && data.dados && data.dados.existe === false)
+          ) {
             setShowOtherFields(true);
             setShowSuccessScreen(false);
-            console.log('CPF não encontrado localmente. Abrindo campos para cadastro.');
+            setShowQRCodes(false);
+            console.log('Documento não encontrado localmente. Abrindo campos para cadastro.');
           } else {
             Alert.alert('Atenção', 'Resposta inesperada do servidor local.');
           }
@@ -528,15 +583,18 @@ export default function RegistrationScreen({ navigation, isProductionMode }) {
       const tabletName = await ConfigStorage.getTabletId();
       console.log('[DEBUG] tabletName:', tabletName);
 
+      const fullName = `${name} ${lastName}`.trim().replace(/\s+/g, ' ');
       const requestBodyProd = JSON.stringify({
-        name: `${name} ${lastName}`.trim(),
-        cpf: displayCPF(cpf),
+        name: fullName,
         email: email,
-        phone: displayPhone(cellphone),
+        phone: isBrazilian ? displayPhone(cellphone) : cellphone,
         date_birthday: convertDateToISO(dateBirthday),
+        is_foreign: !isBrazilian,
+        id_type: isBrazilian ? 'cpf' : 'passport',
+        id_number: isBrazilian ? displayCPF(cpf) : passport,
         source: "promoter_tablet",
         tablet_name: tabletName,
-        client_created_at: generateClientCreatedAt(),
+        client_created_at: isBrazilian ? generateClientCreatedAt() : undefined,
       });
 
       console.log('Request Body (Produção):', requestBodyProd);
@@ -646,16 +704,22 @@ export default function RegistrationScreen({ navigation, isProductionMode }) {
       const normalizedBaseUrl = baseUrl.replace(/\/$/, '');
       const localUrl = `${normalizedBaseUrl}/register`;
 
-      const requestBodyLocal = JSON.stringify({
-        name: `${name} ${lastName}`.trim(),
-        cpf: cpf,
+      const fullName = `${name} ${lastName}`.trim().replace(/\s+/g, ' ');
+      const bodyLocal = {
+        name: fullName,
         email: email,
-        phone: displayPhone(cellphone),
+        phone: isBrazilian ? displayPhone(cellphone) : cellphone,
         date_birthday: convertDateToISO(dateBirthday),
+        is_foreign: !isBrazilian,
+        id_type: isBrazilian ? 'cpf' : 'passport',
+        id_number: isBrazilian ? displayCPF(cpf) : passport,
         source: "promoter_tablet",
         tablet_name: tabletName,
-        client_created_at: generateClientCreatedAt(),
-      });
+      };
+      if (isBrazilian) {
+        bodyLocal.client_created_at = generateClientCreatedAt();
+      }
+      const requestBodyLocal = JSON.stringify(bodyLocal);
 
       console.log('Request Body (Local):', requestBodyLocal);
       console.log('URL:', localUrl);
@@ -789,6 +853,12 @@ export default function RegistrationScreen({ navigation, isProductionMode }) {
     return cpfValue;
   };
 
+  // Formatar passaporte (alfanumérico e caixa alta, até 20)
+  const formatPassport = (text) => {
+    const cleaned = text.replace(/[^A-Za-z0-9]/g, '').slice(0, 20).toUpperCase();
+    setPassport(cleaned);
+  };
+
   const handleSuccessComplete = () => {
     setShowSuccessScreen(false);
     navigation.goBack();
@@ -796,8 +866,14 @@ export default function RegistrationScreen({ navigation, isProductionMode }) {
 
   // Função para formatar telefone
   const formatPhone = (text) => {
-    const cleaned = text.replace(/\D/g, '');
-    setCellphone(cleaned);
+    if (isBrazilian) {
+      const cleaned = text.replace(/\D/g, '');
+      setCellphone(cleaned);
+    } else {
+      // Estrangeiro: permite +, espaço e dígitos
+      const cleaned = text.replace(/[^+\d\s]/g, '').slice(0, 30);
+      setCellphone(cleaned);
+    }
   };
 
   // Função para exibir telefone formatado
@@ -825,7 +901,14 @@ export default function RegistrationScreen({ navigation, isProductionMode }) {
     setDateBirthday('');
   };
 
-  const isFormValid = cpf.length === 11 && name.length > 0 && lastName.length > 0 && email.length > 0 && cellphone.length > 0 && dateBirthday.length === 10;
+  const isFormValid = (
+    (isBrazilian ? cpf.length === 11 : passport.trim().length > 0) &&
+    name.trim().length > 0 &&
+    lastName.trim().length > 0 &&
+    email.trim().length > 0 &&
+    cellphone.trim().length > 0 &&
+    dateBirthday.length === 10
+  );
 
   return (
     <SafeAreaView style={styles.container}>
@@ -896,23 +979,55 @@ export default function RegistrationScreen({ navigation, isProductionMode }) {
               </View>
             ) : (
               <View style={styles.formSection}>
+                {/* Switch nacionalidade */}
+                <View style={styles.switchContainer}>
+                  <TouchableOpacity
+                    style={[styles.switchOption, isBrazilian && styles.switchOptionActive]}
+                    onPress={() => setIsBrazilian(true)}
+                  >
+                    <Text style={[styles.switchOptionText, isBrazilian && styles.switchOptionTextActive]}>Brasileiro</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.switchOption, !isBrazilian && styles.switchOptionActive]}
+                    onPress={() => setIsBrazilian(false)}
+                  >
+                    <Text style={[styles.switchOptionText, !isBrazilian && styles.switchOptionTextActive]}>Estrangeiro</Text>
+                  </TouchableOpacity>
+                </View>
+
                 <View style={styles.inputContainer}>
                   <Text style={[
                     styles.label,
                     isTablet ? styles.labelTablet : styles.labelMobile
-                  ]}>CPF *</Text>
-                  <TextInput
-                    style={[
-                      styles.input,
-                      isTablet ? styles.inputTablet : styles.inputMobile
-                    ]}
-                    value={displayCPF(cpf)}
-                    onChangeText={formatCPF}
-                    placeholder="000.000.000-00"
-                    placeholderTextColor="rgba(255, 255, 255, 0.5)"
-                    keyboardType="numeric"
-                    maxLength={14}
-                  />
+                  ]}>{isBrazilian ? 'CPF *' : 'Passaporte *'}</Text>
+                  {isBrazilian ? (
+                    <TextInput
+                      style={[
+                        styles.input,
+                        isTablet ? styles.inputTablet : styles.inputMobile
+                      ]}
+                      value={displayCPF(cpf)}
+                      onChangeText={formatCPF}
+                      placeholder="000.000.000-00"
+                      placeholderTextColor="rgba(255, 255, 255, 0.5)"
+                      keyboardType="numeric"
+                      maxLength={14}
+                    />
+                  ) : (
+                    <TextInput
+                      style={[
+                        styles.input,
+                        isTablet ? styles.inputTablet : styles.inputMobile
+                      ]}
+                      value={passport}
+                      onChangeText={formatPassport}
+                      placeholder="Número do passaporte"
+                      placeholderTextColor="rgba(255, 255, 255, 0.5)"
+                      keyboardType="default"
+                      autoCapitalize="characters"
+                      maxLength={20}
+                    />
+                  )}
                   {!showOtherFields && (
                     <TouchableOpacity
                       style={[
@@ -920,11 +1035,11 @@ export default function RegistrationScreen({ navigation, isProductionMode }) {
                         styles.secondaryButton,
                         isTablet ? styles.buttonTablet : styles.buttonMobile,
                         loading && styles.disabledButton,
-                        (cpf.length !== 11) && styles.disabledButton,
+                        (isBrazilian ? (cpf.length !== 11) : (passport.trim().length === 0)) && styles.disabledButton,
                         styles.checkButton
                       ]}
                       onPress={checkCPF}
-                      disabled={loading || cpf.length !== 11}
+                      disabled={loading || (isBrazilian ? (cpf.length !== 11) : (passport.trim().length === 0))}
                     >
                       <View style={styles.buttonContent}>
                         {loading ? (
@@ -934,7 +1049,7 @@ export default function RegistrationScreen({ navigation, isProductionMode }) {
                             styles.buttonText,
                             styles.secondaryButtonText,
                             isTablet ? styles.buttonTextTablet : styles.buttonTextMobile
-                          ]}>Verificar CPF</Text>
+                          ]}>{isBrazilian ? 'Verificar CPF' : 'Verificar Documento'}</Text>
                         )}
                       </View>
                       <View style={[
@@ -1018,12 +1133,12 @@ export default function RegistrationScreen({ navigation, isProductionMode }) {
                             styles.inputSmall,
                             isTablet ? styles.inputTablet : styles.inputMobile
                           ]}
-                          value={displayPhone(cellphone)}
+                          value={isBrazilian ? displayPhone(cellphone) : cellphone}
                           onChangeText={formatPhone}
-                          placeholder="(11) 99999-9999"
+                          placeholder={isBrazilian ? "(11) 99999-9999" : "+1 202 885 0199"}
                           placeholderTextColor="rgba(255, 255, 255, 0.5)"
-                          keyboardType="numeric"
-                          maxLength={15}
+                          keyboardType={isBrazilian ? "numeric" : "phone-pad"}
+                          maxLength={isBrazilian ? 15 : 30}
                         />
                       </View>
                       <View style={[styles.inputSubContainer, isTablet ? styles.inputSubContainerTablet : styles.inputSubContainerMobile]}>
@@ -1418,5 +1533,31 @@ const styles = StyleSheet.create({
   },
   inputSmall: {
     flex: 1,
+  },
+  // Switch nacionalidade
+  switchContainer: {
+    flexDirection: 'row',
+    alignSelf: 'stretch',
+    marginBottom: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
+    overflow: 'hidden',
+  },
+  switchOption: {
+    flex: 1,
+    paddingVertical: 12,
+    backgroundColor: 'rgba(26,26,26,0.8)',
+    alignItems: 'center',
+  },
+  switchOptionActive: {
+    backgroundColor: '#e4ff04',
+  },
+  switchOptionText: {
+    color: 'rgba(255,255,255,0.8)',
+    fontWeight: '600',
+  },
+  switchOptionTextActive: {
+    color: '#000',
   },
 });

@@ -181,11 +181,13 @@ export default function QRCodeScanner({ visible, onClose, onSuccess, onAlreadyDo
         console.log('MODO PRODUÇÃO - enviando para /activity/validate');
         
         const prodBody = JSON.stringify({
-          cpf: data.trim(),
+          is_foreign: false,
+          id_type: 'cpf',
+          id_number: data.trim(),
           method: 'qrcode',
           stand_name: standName.toLowerCase(),
           tablet_name: tabletName,
-          client_created_at: generateClientAttemptAt(),
+          client_validated_at: generateClientAttemptAt(),
         });
 
         response = await fetch(`${API_BASE_URL}/activity/validate`, {
@@ -208,10 +210,12 @@ export default function QRCodeScanner({ visible, onClose, onSuccess, onAlreadyDo
         
       } else {
         // MODO LOCAL
-        console.log('MODO LOCAL - enviando para /activity-qr');
-        
+        console.log('MODO LOCAL - enviando para /activity/validate');
+
         const localBody = JSON.stringify({
-          cpf: data.trim(),
+          is_foreign: false,
+          id_type: 'cpf',
+          id_number: data.trim(),
           method: 'qrcode',
           stand_name: standName.toLowerCase(),
           tablet_name: tabletName,
@@ -220,8 +224,8 @@ export default function QRCodeScanner({ visible, onClose, onSuccess, onAlreadyDo
 
         const localBaseUrl = await ConfigStorage.getLocalBaseUrl();
         const normalizedBaseUrl = localBaseUrl ? localBaseUrl.replace(/\/$/, '') : '';
-        const localUrl = `${normalizedBaseUrl}/activity-qr`;
-        
+        const localUrl = `${normalizedBaseUrl}/activity/validate`;
+
         response = await fetch(localUrl, {
           method: 'POST',
           headers: {
