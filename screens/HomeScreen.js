@@ -285,8 +285,8 @@ export default function HomeScreen({ navigation }) {
           setShowQRScanner(false);
         }}
         onAlreadyDone={() => {
-          setSuccessMessage('Atividade já realizada. Entrada liberada!');
-          setShowSuccessScreen(true);
+          setAlreadyDoneMessage('Atividade já realizada.');
+          setShowAlreadyDoneScreen(true);
           setShowQRScanner(false);
         }}
       />

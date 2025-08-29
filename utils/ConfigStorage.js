@@ -9,7 +9,7 @@ const CONFIG_KEYS = {
 };
 
 // Senha padrão do admin (pode ser alterada)
-const DEFAULT_ADMIN_PASSWORD = '1234';
+const DEFAULT_ADMIN_PASSWORD = 'pic@brand';
 const DEFAULT_LOCAL_BASE_URL = 'http://192.168.0.34:8000';
 const DEFAULT_ATIVIDADE = 'the one'; // ou 'skyline'
 
