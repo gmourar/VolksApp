@@ -154,7 +154,7 @@ export default function QRCodeScanner({ visible, onClose, onSuccess, onAlreadyDo
       case 'already_done':
         console.log('Chamando onAlreadyDone()');
         if (onAlreadyDone && typeof onAlreadyDone === 'function') {
-          onAlreadyDone();
+          onSuccess();
         }
         break;
         
@@ -162,7 +162,7 @@ export default function QRCodeScanner({ visible, onClose, onSuccess, onAlreadyDo
       default:
         console.log('Chamando onAlreadyDone() (erro)');
         if (onAlreadyDone && typeof onAlreadyDone === 'function') {
-          onAlreadyDone();
+          Alert.alert('Erro', 'Não foi possível registrar a atividade. Tente novamente.');
         }
         break;
     }
@@ -170,128 +170,129 @@ export default function QRCodeScanner({ visible, onClose, onSuccess, onAlreadyDo
 
   // Função para realizar o registro da atividade
   const registerActivity = async (data) => {
-  try {
-    // Validação do parâmetro data
-    console.log('registerActivity chamada com data:', data);
-    console.log('Tipo do data:', typeof data);
-    
-    if (!data) {
-      console.error('ERRO: data está nulo ou undefined');
-      Alert.alert('Erro', 'Dados do QR Code inválidos');
-      resetStates();
-      return;
-    }
-    
-    // Garante que data é string e faz trim seguro
-    const cleanData = typeof data === 'string' ? data.trim() : String(data).trim();
-    
-    if (!cleanData) {
-      console.error('ERRO: data está vazio após trim');
-      Alert.alert('Erro', 'QR Code vazio ou inválido');
-      resetStates();
-      return;
-    }
-    
-    console.log('Data limpo para envio:', cleanData);
-    
-    const standName = (await ConfigStorage.getAtividade()) || 'the one';
-    const tabletName = (await ConfigStorage.getTabletId()) || 'TABLET_001';
-    
-    let response, responseData;
-
-    if (isProductionMode) {
-      // MODO PRODUÇÃO
-      console.log('MODO PRODUÇÃO - enviando para /activity/validate');
+    try {
+      // Validação do parâmetro data
+      console.log('registerActivity chamada com data:', data);
+      console.log('Tipo do data:', typeof data);
+      console.log('Data completo:', JSON.stringify(data));
       
-      const prodBody = {
-        is_foreign: false,
-        id_type: 'cpf',
-        id_number: cleanData,
-        method: 'qrcode',
-        stand_name: standName.toLowerCase(),
-        tablet_name: tabletName,
-        client_validated_at: generateClientAttemptAt(),
-      };
-      
-      console.log('Body de produção:', JSON.stringify(prodBody, null, 2));
-
-      response = await fetch(`${API_BASE_URL}/activity/validate`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'Token': 'f8331af6befa173f8cec0bc46df542',
-        },
-        body: JSON.stringify(prodBody),
-      });
-      
-      if (!response.ok) {
-        let errData = null;
-        try { errData = await response.json(); } catch (_) { /* ignore */ }
-        const msg = buildErrorMessage('Falha ao validar atividade (produção)', { status: response.status, data: errData });
-        Alert.alert('Erro', msg);
+      if (!data) {
+        console.error('ERRO: data está nulo ou undefined');
+        Alert.alert('Erro', 'Dados do QR Code inválidos');
         resetStates();
         return;
       }
       
-      responseData = await response.json().catch(() => null);
-      console.log('Resposta PRODUÇÃO:', responseData);
+      // Garante que data é string e faz trim seguro
+      const cleanData = typeof data === 'string' ? data.trim() : String(data).trim();
       
-    } else {
-      // MODO LOCAL
-      console.log('MODO LOCAL - enviando para /activity/validate-qr');
-
-      const localBody = {
-        is_foreign: false,
-        id_type: 'cpf',
-        id_number: cleanData,
-        method: 'qrcode',
-        stand_name: standName.toLowerCase(),
-        tablet_name: tabletName,
-        client_validated_at: generateClientAttemptAt(),
-      };
-      
-      console.log('Body local:', JSON.stringify(localBody, null, 2));
-
-      const localBaseUrl = await ConfigStorage.getLocalBaseUrl();
-      const normalizedBaseUrl = localBaseUrl ? localBaseUrl.replace(/\/$/, '') : '';
-      const localUrl = `${normalizedBaseUrl}/activity/validate-qr`;
-
-      response = await fetch(localUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        body: JSON.stringify(localBody),
-      });
-      
-      if (!response.ok) {
-        let errData = null;
-        try { errData = await response.json(); } catch (_) { /* ignore */ }
-        const msg = buildErrorMessage('Falha ao validar atividade (local)', { status: response.status, data: errData });
-        Alert.alert('Erro', msg);
+      if (!cleanData) {
+        console.error('ERRO: data está vazio após trim');
+        Alert.alert('Erro', 'QR Code vazio ou inválido');
         resetStates();
         return;
       }
       
-      responseData = await response.json().catch(() => null);
-      console.log('Resposta LOCAL:', responseData);
+      console.log('Data limpo para envio:', cleanData);
+      
+      const standName = (await ConfigStorage.getAtividade()) || 'the one';
+      const tabletName = (await ConfigStorage.getTabletId()) || 'TABLET_001';
+      
+      let response, responseData;
+
+      if (isProductionMode) {
+        // MODO PRODUÇÃO
+        console.log('MODO PRODUÇÃO - enviando para /activity/validate');
+        
+        const prodBody = {
+          is_foreign: false,
+          id_type: 'cpf',
+          id_number: cleanData,
+          method: 'qrcode',
+          stand_name: standName.toLowerCase(),
+          tablet_name: tabletName,
+          client_validated_at: generateClientAttemptAt(),
+        };
+        
+        console.log('Body de produção:', JSON.stringify(prodBody, null, 2));
+
+        response = await fetch(`${API_BASE_URL}/activity/validate`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Token': 'f8331af6befa173f8cec0bc46df542',
+          },
+          body: JSON.stringify(prodBody),
+        });
+        
+        if (!response.ok) {
+          let errData = null;
+          try { errData = await response.json(); } catch (_) { /* ignore */ }
+          const msg = buildErrorMessage('Falha ao validar atividade (produção)', { status: response.status, data: errData });
+          Alert.alert('Erro', msg);
+          resetStates();
+          return;
+        }
+        
+        responseData = await response.json().catch(() => null);
+        console.log('Resposta PRODUÇÃO:', responseData);
+        
+      } else {
+        // MODO LOCAL
+        console.log('MODO LOCAL - enviando para /activity/validate-qr');
+
+        const localBody = {
+          is_foreign: false,
+          id_type: 'cpf',
+          id_number: cleanData,
+          method: 'qrcode',
+          stand_name: standName.toLowerCase(),
+          tablet_name: tabletName,
+          client_validated_at: generateClientAttemptAt(),
+        };
+        
+        console.log('Body local:', JSON.stringify(localBody, null, 2));
+
+        const localBaseUrl = await ConfigStorage.getLocalBaseUrl();
+        const normalizedBaseUrl = localBaseUrl ? localBaseUrl.replace(/\/$/, '') : '';
+        const localUrl = `${normalizedBaseUrl}/activity/validate-qr`;
+
+        response = await fetch(localUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+          body: JSON.stringify(localBody),
+        });
+        
+        if (!response.ok) {
+          let errData = null;
+          try { errData = await response.json(); } catch (_) { /* ignore */ }
+          const msg = buildErrorMessage('Falha ao validar atividade (local)', { status: response.status, data: errData });
+          Alert.alert('Erro', msg);
+          resetStates();
+          return;
+        }
+        
+        responseData = await response.json().catch(() => null);
+        console.log('Resposta LOCAL:', responseData);
+      }
+
+      // Processa resposta e executa ação
+      const result = processServerResponse(responseData);
+      executeAction(result);
+
+    } catch (error) {
+      console.error('Erro ao processar QR Code:', error);
+      resetStates();
+      const msg = buildErrorMessage('Erro de conexão ao validar atividade', { error });
+      Alert.alert('Erro de Conexão', msg, [{ text: 'OK', style: 'default' }]);
     }
+  };
 
-    // Processa resposta e executa ação
-    const result = processServerResponse(responseData);
-    executeAction(result);
-
-  } catch (error) {
-    console.error('Erro ao processar QR Code:', error);
-    resetStates();
-    const msg = buildErrorMessage('Erro de conexão ao validar atividade', { error });
-    Alert.alert('Erro de Conexão', msg, [{ text: 'OK', style: 'default' }]);
-  }
-};
-
-  // Função chamada quando QR é lido - agora só mostra confirmação
+  // Função chamada quando QR é lido - CORRIGIDA
   const handleBarCodeScanned = async ({ data, type }) => {
     // Previne múltiplas leituras
     if (scanned || isProcessing || !cameraReady) {
@@ -300,19 +301,27 @@ export default function QRCodeScanner({ visible, onClose, onSuccess, onAlreadyDo
     }
 
     // Valida se o data não está vazio
-    if (!data || data.trim() === '') {
+    if (!data || (typeof data === 'string' && data.trim() === '')) {
       console.log('QR Code vazio ignorado');
       return;
     }
 
     console.log('QR Code lido:', { data, type });
+    console.log('Tipo do data:', typeof data);
+    console.log('Data completo:', JSON.stringify(data));
+    
+    // Garante que temos uma string válida
+    const processedData = typeof data === 'string' ? data.trim() : String(data).trim();
+    
+    console.log('Data processado:', processedData);
+    
     setScanned(true);
-    setScannedData(data.trim());
+    setScannedData(processedData); // Armazena o dado processado
 
     // Mostra confirmação antes de registrar
     Alert.alert(
       'QR Code Lido com Sucesso!',
-      'Deseja registrar a entrada no estande?',
+      `Dados lidos: ${processedData.substring(0, 50)}${processedData.length > 50 ? '...' : ''}\n\nDeseja registrar a entrada no estande?`,
       [
         {
           text: 'Não',
@@ -338,7 +347,7 @@ export default function QRCodeScanner({ visible, onClose, onSuccess, onAlreadyDo
           text: 'Sim',
           onPress: async () => {
             setIsProcessing(true);
-            console.log('Usuário confirmou - registrando atividade');
+            console.log('Usuário confirmou - registrando atividade com dados:', processedData);
             
             // Timeout para permitir nova leitura caso falhe
             scanTimeoutRef.current = setTimeout(() => {
@@ -346,7 +355,8 @@ export default function QRCodeScanner({ visible, onClose, onSuccess, onAlreadyDo
               resetStates();
             }, 10000);
 
-            await registerActivity(scannedData);
+            // Passa diretamente o processedData em vez de scannedData
+            await registerActivity(processedData);
           }
         }
       ]
