@@ -11,15 +11,16 @@ import {
   ActivityIndicator,
   Dimensions,
   Image,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import SuccessScreen from '../components/SuccessScreen.js';
 import AlreadyDoneScreen from '../components/AlreadyDoneScreen';
 import { NetworkPermissions } from '../utils/networkPermissions';
 import { ConfigStorage } from '../utils/ConfigStorage.js';
 import { API_BASE_URL } from '../utils/apiConfig';
-import { useHeaderHeight } from '@react-navigation/elements';
 
-const { width } = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
 
 export default function RegistrationScreen({ navigation, isProductionMode }) {
   const [cpf, setCpf] = useState('');
@@ -39,9 +40,6 @@ export default function RegistrationScreen({ navigation, isProductionMode }) {
 
   // Detecta se é tablet ou celular baseado na largura da tela
   const isTablet = width >= 768;
-
-  // Altura real do header da stack para evitar sobrepor quando exibimos QR Codes
-  const headerHeight = useHeaderHeight();
 
   useEffect(() => {
     // Verifica permissões de rede ao montar o componente
@@ -107,12 +105,11 @@ export default function RegistrationScreen({ navigation, isProductionMode }) {
   };
 
   // Registrar atividade do CPF no estande/atividade configurado
-  // Retorna 'ok' quando sucesso; 'already' quando já realizada; lança erro para demais falhas
   const registerActivity = async () => {
     try {
       const standName = (await ConfigStorage.getAtividade()) || 'the one';
       const tabletName = await ConfigStorage.getTabletId();
-      // Corrigir nome do campo e formato do body para produção
+      
       const prodBody = JSON.stringify({
         cpf: displayCPF(cpf),
         method: "cpf",
@@ -153,7 +150,6 @@ export default function RegistrationScreen({ navigation, isProductionMode }) {
           console.log('[PROD] Erro ao logar headers:', e);
         }
       } else {
-        // Modo LOCAL - registra atividade no servidor local
         console.log('Modo LOCAL - registrando atividade no servidor local');
         const baseUrl = (await ConfigStorage.getLocalBaseUrl()) || 'http://192.168.0.34:8000';
         const normalizedBaseUrl = baseUrl.replace(/\/$/, '');
@@ -177,12 +173,12 @@ export default function RegistrationScreen({ navigation, isProductionMode }) {
 
       const data = await response.json().catch(() => null);
       console.log('[PROD] Response Body:', data);
-      // Sucesso direto
+      
       if (response.ok && data && data.sucesso === true) {
         console.log('Atividade registrada no estande:', standName.toLowerCase());
         return 'ok';
       }
-      // Produção/local: erro aninhado ou simples indicando atividade já realizada
+      
       if (
         data &&
         data.sucesso === false && (
@@ -201,14 +197,12 @@ export default function RegistrationScreen({ navigation, isProductionMode }) {
     }
   };
 
-  // Função para criar um timeout compatível com versões antigas
   const createTimeoutSignal = (timeoutMs) => {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => {
       controller.abort();
     }, timeoutMs);
 
-    // Limpa o timeout se o sinal for abortado por outro motivo
     controller.signal.addEventListener('abort', () => {
       clearTimeout(timeoutId);
     });
@@ -216,7 +210,6 @@ export default function RegistrationScreen({ navigation, isProductionMode }) {
     return controller.signal;
   };
 
-  // Utilitário para montar mensagens de erro detalhadas
   const buildErrorMessage = (context, options = {}) => {
     const { status, data, error } = options;
     let base = context ? `${context}` : 'Erro na requisição';
@@ -230,9 +223,6 @@ export default function RegistrationScreen({ navigation, isProductionMode }) {
     return parts.length ? `${base}: ${parts.join(' - ')}` : base;
   };
 
-
-
-  // Função para verificar CPF
   const checkCPF = async () => {
     if (cpf.length !== 11) {
       Alert.alert('Erro', 'CPF deve ter 11 dígitos');
@@ -261,7 +251,6 @@ export default function RegistrationScreen({ navigation, isProductionMode }) {
       const tabletName = await ConfigStorage.getTabletId();
 
       if (isProductionMode) {
-        // Modo PRODUÇÃO - verifica direto na API de produção
         console.log('Modo PRODUÇÃO - verificando CPF na API de produção');
         response = await fetch(`${API_BASE_URL}/cpf/status`, {
           method: 'POST',
@@ -270,10 +259,12 @@ export default function RegistrationScreen({ navigation, isProductionMode }) {
             'Accept': 'application/json',
             'Token': 'f8331af6befa173f8cec0bc46df542',
           },
-          body: JSON.stringify({ cpf: displayCPF(cpf),
-                                stand_name: standName.toLowerCase(),
-                                tablet_name: tabletName,
-                                client_checked_at: generateClientCreatedAt(), }),
+          body: JSON.stringify({ 
+            cpf: displayCPF(cpf),
+            stand_name: standName.toLowerCase(),
+            tablet_name: tabletName,
+            client_checked_at: generateClientCreatedAt(), 
+          }),
         });
 
         console.log('CPF Check Response Status:', response.status);
@@ -282,13 +273,11 @@ export default function RegistrationScreen({ navigation, isProductionMode }) {
 
         if (response.ok && data && data.dados) {
           if (data.dados.existe === false) {
-            // Em PRODUÇÃO: mostrar QR Codes ao invés do formulário
             setShowQRCodes(true);
             setShowOtherFields(false);
             setShowSuccessScreen(false);
             console.log('CPF não existe (PRODUÇÃO). Exibindo QR Codes.');
           } else if (data.dados.existe === true) {
-            // Prompt perguntando se deseja registrar a entrada
             Alert.alert(
               'CPF Verificado com Sucesso!',
               'Deseja registrar a entrada no estande?',
@@ -341,7 +330,6 @@ export default function RegistrationScreen({ navigation, isProductionMode }) {
             Alert.alert('Atenção', 'Resposta inesperada do servidor.');
           }
         } else if (response.status === 400) {
-          // fallback antigo: tratar 400 como não encontrado
           setShowOtherFields(true);
           console.log('CPF não encontrado (400). Abrindo campos para cadastro.');
         } else {
@@ -349,7 +337,6 @@ export default function RegistrationScreen({ navigation, isProductionMode }) {
           Alert.alert('Erro', msg);
         }
       } else {
-        // Modo LOCAL - verifica no servidor local
         console.log('Modo LOCAL - verificando CPF no servidor local');
         const baseUrl = (await ConfigStorage.getLocalBaseUrl()) || 'http://192.168.0.34:8000';
         const normalizedBaseUrl = baseUrl.replace(/\/$/, '');
@@ -382,7 +369,6 @@ export default function RegistrationScreen({ navigation, isProductionMode }) {
 
         if (response.ok && data) {
           if (data.status === 'success' && data.usuario) {
-            // CPF encontrado na base local
             Alert.alert(
               'CPF encontrado!',
               'Deseja registrar uma atividade para este usuário?',
@@ -399,7 +385,6 @@ export default function RegistrationScreen({ navigation, isProductionMode }) {
                   text: 'Sim',
                   onPress: async () => {
                     try {
-                      // Monta body conforme padrão
                       const standName = (await ConfigStorage.getAtividade()) || 'the one';
                       const tabletName = (await ConfigStorage.getTabletId()) || '';
                       const activityBody = JSON.stringify({
@@ -449,7 +434,6 @@ export default function RegistrationScreen({ navigation, isProductionMode }) {
               ]
             );
           } else if (data.status === 'error' && data.message && data.message.toLowerCase().includes('não encontrado')) {
-            // CPF não encontrado na base local
             setShowOtherFields(true);
             setShowSuccessScreen(false);
             console.log('CPF não encontrado localmente. Abrindo campos para cadastro.');
@@ -470,9 +454,6 @@ export default function RegistrationScreen({ navigation, isProductionMode }) {
     }
   };
 
-
-
-  // Função para cadastrar usuário com modo selecionado
   const registerUser = async () => {
     if (!cpf || !name || !lastName || !email || !cellphone || !dateBirthday) {
       Alert.alert('Erro', 'Todos os campos são obrigatórios');
@@ -483,7 +464,7 @@ export default function RegistrationScreen({ navigation, isProductionMode }) {
     const parts = dateBirthday.split('/');
     if (parts.length === 3) {
       const day = parseInt(parts[0], 10);
-      const month = parseInt(parts[1], 10) - 1; // mês começa em 0
+      const month = parseInt(parts[1], 10) - 1;
       const year = parseInt(parts[2], 10);
       const birthDate = new Date(year, month, day);
       const today = new Date();
@@ -524,11 +505,9 @@ export default function RegistrationScreen({ navigation, isProductionMode }) {
 
     try {
       if (isProductionMode) {
-        // Modo produção - faz cadastro direto na produção
         console.log('Modo PRODUÇÃO - fazendo cadastro na API de produção');
         await registerUserInProduction();
       } else {
-        // Modo local - faz cadastro direto no servidor local
         console.log('Modo LOCAL - fazendo cadastro no servidor local');
         await registerUserLocally();
       }
@@ -542,12 +521,10 @@ export default function RegistrationScreen({ navigation, isProductionMode }) {
     }
   };
 
-  // Função para cadastrar na API de produção
   const registerUserInProduction = async () => {
     console.log('Fazendo cadastro na API de produção...');
 
     try {
-      // Obter o nome do tablet da configuração
       const tabletName = await ConfigStorage.getTabletId();
       console.log('[DEBUG] tabletName:', tabletName);
 
@@ -562,13 +539,9 @@ export default function RegistrationScreen({ navigation, isProductionMode }) {
         client_created_at: generateClientCreatedAt(),
       });
 
-
-
-
       console.log('Request Body (Produção):', requestBodyProd);
       console.log(`URL: ${API_BASE_URL}/register`);
 
-      // Ajuste para fuso horário de Brasília (UTC-3)
       const nowBrasilia = new Date(Date.now());
       const startTime = nowBrasilia.getTime();
 
@@ -581,7 +554,7 @@ export default function RegistrationScreen({ navigation, isProductionMode }) {
           'Token': 'f8331af6befa173f8cec0bc46df542',
         },
         body: requestBodyProd,
-        signal: createTimeoutSignal(30000), // 30 segundos
+        signal: createTimeoutSignal(30000),
       });
 
       const endBrasilia = new Date(Date.now());
@@ -596,7 +569,6 @@ export default function RegistrationScreen({ navigation, isProductionMode }) {
         console.log('SUCCESS! Response Data (Produção):', responseData);
 
         if (responseData && responseData.sucesso === false) {
-          // Se houver erros, exibe alerta com mensagem apropriada
           let errorMsg = 'Erro ao cadastrar usuário.';
           if (responseData.erros) {
             if (typeof responseData.erros === 'string') {
@@ -611,7 +583,6 @@ export default function RegistrationScreen({ navigation, isProductionMode }) {
           return;
         }
 
-        // Após cadastro em produção, perguntar se deseja registrar atividade
         Alert.alert(
           'Cadastro realizado com sucesso!',
           'Deseja registrar uma atividade para este usuário?',
@@ -662,11 +633,10 @@ export default function RegistrationScreen({ navigation, isProductionMode }) {
 
     } catch (error) {
       console.log('Erro no cadastro de produção:', error);
-      throw error; // Re-lança o erro para ser tratado na função principal
+      throw error;
     }
   };
 
-  // Função para cadastrar localmente
   const registerUserLocally = async () => {
     console.log('Fazendo cadastro local...');
 
@@ -690,7 +660,6 @@ export default function RegistrationScreen({ navigation, isProductionMode }) {
       console.log('Request Body (Local):', requestBodyLocal);
       console.log('URL:', localUrl);
 
-      // Ajuste para fuso horário de Brasília (UTC-3)
       const nowBrasilia = new Date(Date.now());
       const startTime = nowBrasilia.getTime();
 
@@ -707,7 +676,7 @@ export default function RegistrationScreen({ navigation, isProductionMode }) {
             'Origin': normalizedBaseUrl,
           },
           body: requestBodyLocal,
-          signal: createTimeoutSignal(30000), // 30 segundos
+          signal: createTimeoutSignal(30000),
         });
       } catch (err) {
         console.log('[ERRO DE CONEXÃO LOCALHOST - register]', err);
@@ -726,7 +695,6 @@ export default function RegistrationScreen({ navigation, isProductionMode }) {
         const responseData = await response.json();
         console.log('SUCCESS! Response Data (Local):', responseData);
 
-        // Após cadastro local, perguntar se deseja registrar atividade
         Alert.alert(
           'Cadastro realizado com sucesso!',
           'Deseja registrar uma atividade para este usuário?',
@@ -744,7 +712,6 @@ export default function RegistrationScreen({ navigation, isProductionMode }) {
               onPress: async () => {
                 console.log('[LOG] Usuário optou por registrar atividade após cadastro local. CPF:', cpf);
                 try {
-                  // Monta body conforme padrão
                   const standName = (await ConfigStorage.getAtividade()) || 'the one';
                   const tabletName = (await ConfigStorage.getTabletId()) || '';
                   const activityBody = JSON.stringify({
@@ -845,14 +812,26 @@ export default function RegistrationScreen({ navigation, isProductionMode }) {
     return phoneValue;
   };
 
-  const isFormValid = cpf.length === 11 && name.length > 0 && lastName.length > 0 && email.length > 0 && cellphone.length > 0 && dateBirthday.length === 10;
+  // Função para resetar o estado e voltar ao início
+  const resetToInitialState = () => {
+    setShowQRCodes(false);
+    setShowOtherFields(false);
+    setShowSuccessScreen(false);
+    setCpf('');
+    setName('');
+    setLastName('');
+    setEmail('');
+    setCellphone('');
+    setDateBirthday('');
+  };
 
-  // Garante espaço no topo igual ao header para que o conteúdo não cubra o header
-  const headerOffsetStyle = { paddingTop: (headerHeight || 0) + 12 };
+  const isFormValid = cpf.length === 11 && name.length > 0 && lastName.length > 0 && email.length > 0 && cellphone.length > 0 && dateBirthday.length === 10;
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Indicação discreta do servidor */}
+      {/* Header fixo - sempre visível */}
+
+      {/* Indicação do servidor */}
       <View style={styles.serverInfoContainer}>
         <View style={[
           styles.serverBadge,
@@ -867,242 +846,241 @@ export default function RegistrationScreen({ navigation, isProductionMode }) {
         </View>
       </View>
       
-      <ScrollView 
-        contentContainerStyle={[
-          styles.scrollContent,
-          headerOffsetStyle,
-          showQRCodes ? styles.scrollContentQR : {}
-        ]}
+      <KeyboardAvoidingView 
+        style={styles.keyboardAvoidingView}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
       >
-        <View style={[
-          styles.content,
-          isTablet ? styles.contentTablet : styles.contentMobile
-        ]}>
-          {showQRCodes ? (
-            <View style={styles.qrContainerWrapper}>
-              <Text style={[styles.title, isTablet ? styles.titleTablet : styles.titleMobile]}>
-                Aponte a câmera para um dos QR Codes
-              </Text>
-              <View style={styles.qrRow}>
-                <Image
-                  source={require('../assets/qrcode1.jpeg')}
-                  style={[styles.qrImage, isTablet ? styles.qrImageTablet : styles.qrImageMobile]}
-                  resizeMode="contain"
-                />
-                <Image
-                  source={require('../assets/qrcode2.jpeg')}
-                  style={[styles.qrImage, isTablet ? styles.qrImageTablet : styles.qrImageMobile]}
-                  resizeMode="contain"
-                />
-              </View>
-              <TouchableOpacity
-                style={[styles.button, styles.secondaryButton, isTablet ? styles.buttonTablet : styles.buttonMobile, styles.qrResetButton]}
-                onPress={() => {
-                  setShowQRCodes(false);
-                  setShowOtherFields(false);
-                  setShowSuccessScreen(false);
-                  setCpf('');
-                }}
-              >
-                <View style={styles.buttonContent}>
-                  <Text style={[styles.buttonText, styles.secondaryButtonText, isTablet ? styles.buttonTextTablet : styles.buttonTextMobile]}>
-                    Verificar novo CPF
-                  </Text>
-                </View>
-                <View style={[styles.buttonGlow, styles.secondaryButtonGlow, isTablet ? styles.buttonGlowTablet : styles.buttonGlowMobile]} />
-              </TouchableOpacity>
-            </View>
-          ) : (
-            <View style={styles.formSection}>
-              <Text style={[
-                styles.title,
-                isTablet ? styles.titleTablet : styles.titleMobile
-              ]}>Novo Usuário</Text>
-
-              <View style={styles.inputContainer}>
-                <Text style={[
-                  styles.label,
-                  isTablet ? styles.labelTablet : styles.labelMobile
-                ]}>CPF *</Text>
-                <TextInput
-                  style={[
-                    styles.input,
-                    isTablet ? styles.inputTablet : styles.inputMobile
-                  ]}
-                  value={displayCPF(cpf)}
-                  onChangeText={formatCPF}
-                  placeholder="000.000.000-00"
-                  placeholderTextColor="rgba(255, 255, 255, 0.5)"
-                  keyboardType="numeric"
-                  maxLength={14}
-                />
-                {!showOtherFields && (
-                  <TouchableOpacity
-                    style={[
-                      styles.button,
-                      styles.secondaryButton,
-                      isTablet ? styles.buttonTablet : styles.buttonMobile,
-                      loading && styles.disabledButton,
-                      (cpf.length !== 11) && styles.disabledButton,
-                      styles.checkButton
-                    ]}
-                    onPress={checkCPF}
-                    disabled={loading || cpf.length !== 11}
-                  >
-                    <View style={styles.buttonContent}>
-                      {loading ? (
-                        <ActivityIndicator color="#e4ff04" size="large" />
-                      ) : (
-                        <Text style={[
-                          styles.buttonText,
-                          styles.secondaryButtonText,
-                          isTablet ? styles.buttonTextTablet : styles.buttonTextMobile
-                        ]}>Verificar CPF</Text>
-                      )}
-                    </View>
-                    <View style={[
-                      styles.buttonGlow,
-                      styles.secondaryButtonGlow,
-                      isTablet ? styles.buttonGlowTablet : styles.buttonGlowMobile
-                    ]} />
-                  </TouchableOpacity>
-                )}
-              </View>
-
-              {showOtherFields && (
-                <>
-                  <View style={[styles.rowContainer, isTablet ? styles.rowContainerTablet : styles.rowContainerMobile]}>
-                    <View style={[styles.inputSubContainer, isTablet ? styles.inputSubContainerTablet : styles.inputSubContainerMobile]}>
-                      <Text style={[
-                        styles.label,
-                        isTablet ? styles.labelTablet : styles.labelMobile
-                      ]}>Nome *</Text>
-                      <TextInput
-                        style={[
-                          styles.input,
-                          styles.inputSmall,
-                          isTablet ? styles.inputTablet : styles.inputMobile
-                        ]}
-                        value={name}
-                        onChangeText={setName}
-                        placeholder="Digite seu nome"
-                        placeholderTextColor="rgba(255, 255, 255, 0.5)"
-                        autoCapitalize="words"
-                      />
-                    </View>
-                    <View style={[styles.inputSubContainer, isTablet ? styles.inputSubContainerTablet : styles.inputSubContainerMobile]}>
-                      <Text style={[
-                        styles.label,
-                        isTablet ? styles.labelTablet : styles.labelMobile
-                      ]}>Sobrenome *</Text>
-                      <TextInput
-                        style={[
-                          styles.input,
-                          styles.inputSmall,
-                          isTablet ? styles.inputTablet : styles.inputMobile
-                        ]}
-                        value={lastName}
-                        onChangeText={setLastName}
-                        placeholder="Digite seu sobrenome"
-                        placeholderTextColor="rgba(255, 255, 255, 0.5)"
-                        autoCapitalize="words"
-                      />
-                    </View>
-                  </View>
-
-                  <View style={styles.inputContainer}>
-                    <Text style={[
-                      styles.label,
-                      isTablet ? styles.labelTablet : styles.labelMobile
-                    ]}>Email *</Text>
-                    <TextInput
-                      style={[
-                        styles.input,
-                        isTablet ? styles.inputTablet : styles.inputMobile
-                      ]}
-                      value={email}
-                      onChangeText={setEmail}
-                      placeholder="seu@email.com"
-                      placeholderTextColor="rgba(255, 255, 255, 0.5)"
-                      keyboardType="email-address"
-                      autoCapitalize="none"
+        <ScrollView 
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View style={[
+            styles.content,
+            isTablet ? styles.contentTablet : styles.contentMobile
+          ]}>
+            {showQRCodes ? (
+              <View style={styles.qrContainer}>
+                <Text style={[styles.title, isTablet ? styles.titleTablet : styles.titleMobile]}>
+                  Aponte a câmera para um dos QR Codes
+                </Text>
+                <View style={styles.qrRow}>
+                  <View style={styles.qrImageContainer}>
+                    <Image
+                      source={require('../assets/qrcode1.jpeg')}
+                      style={[styles.qrImage, isTablet ? styles.qrImageTablet : styles.qrImageMobile]}
+                      resizeMode="contain"
                     />
                   </View>
-
-                  <View style={[styles.rowContainer, isTablet ? styles.rowContainerTablet : styles.rowContainerMobile]}>
-                    <View style={[styles.inputSubContainer, isTablet ? styles.inputSubContainerTablet : styles.inputSubContainerMobile]}>
-                      <Text style={[
-                        styles.label,
-                        isTablet ? styles.labelTablet : styles.labelMobile
-                      ]}>Telefone *</Text>
-                      <TextInput
-                        style={[
-                          styles.input,
-                          styles.inputSmall,
-                          isTablet ? styles.inputTablet : styles.inputMobile
-                        ]}
-                        value={displayPhone(cellphone)}
-                        onChangeText={formatPhone}
-                        placeholder="(11) 99999-9999"
-                        placeholderTextColor="rgba(255, 255, 255, 0.5)"
-                        keyboardType="numeric"
-                        maxLength={15}
-                      />
-                    </View>
-                    <View style={[styles.inputSubContainer, isTablet ? styles.inputSubContainerTablet : styles.inputSubContainerMobile]}>
-                      <Text style={[
-                        styles.label,
-                        isTablet ? styles.labelTablet : styles.labelMobile
-                      ]}>Data de Nascimento *</Text>
-                      <TextInput
-                        style={[
-                          styles.input,
-                          styles.inputSmall,
-                          isTablet ? styles.inputTablet : styles.inputMobile
-                        ]}
-                        value={dateBirthday}
-                        onChangeText={formatDateBirthday}
-                        placeholder="DD/MM/AAAA"
-                        placeholderTextColor="rgba(255, 255, 255, 0.5)"
-                        keyboardType="numeric"
-                        maxLength={10}
-                      />
-                    </View>
+                  <View style={styles.qrImageContainer}>
+                    <Image
+                      source={require('../assets/qrcode2.jpeg')}
+                      style={[styles.qrImage, isTablet ? styles.qrImageTablet : styles.qrImageMobile]}
+                      resizeMode="contain"
+                    />
                   </View>
-
-                  <TouchableOpacity
+                </View>
+                <TouchableOpacity
+                  style={[styles.button, styles.secondaryButton, isTablet ? styles.buttonTablet : styles.buttonMobile]}
+                  onPress={resetToInitialState}
+                >
+                  <View style={styles.buttonContent}>
+                    <Text style={[styles.buttonText, styles.secondaryButtonText, isTablet ? styles.buttonTextTablet : styles.buttonTextMobile]}>
+                      Verificar novo CPF
+                    </Text>
+                  </View>
+                  <View style={[styles.buttonGlow, styles.secondaryButtonGlow, isTablet ? styles.buttonGlowTablet : styles.buttonGlowMobile]} />
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <View style={styles.formSection}>
+                <View style={styles.inputContainer}>
+                  <Text style={[
+                    styles.label,
+                    isTablet ? styles.labelTablet : styles.labelMobile
+                  ]}>CPF *</Text>
+                  <TextInput
                     style={[
-                      styles.button,
-                      styles.primaryButton,
-                      isTablet ? styles.buttonTablet : styles.buttonMobile,
-                      loading && styles.disabledButton,
-                      !isFormValid && styles.disabledButton
+                      styles.input,
+                      isTablet ? styles.inputTablet : styles.inputMobile
                     ]}
-                    onPress={registerUser}
-                    disabled={loading || !isFormValid}
-                  >
-                    <View style={styles.buttonContent}>
-                      {loading ? (
-                        <ActivityIndicator color="#000" size="large" />
-                      ) : (
+                    value={displayCPF(cpf)}
+                    onChangeText={formatCPF}
+                    placeholder="000.000.000-00"
+                    placeholderTextColor="rgba(255, 255, 255, 0.5)"
+                    keyboardType="numeric"
+                    maxLength={14}
+                  />
+                  {!showOtherFields && (
+                    <TouchableOpacity
+                      style={[
+                        styles.button,
+                        styles.secondaryButton,
+                        isTablet ? styles.buttonTablet : styles.buttonMobile,
+                        loading && styles.disabledButton,
+                        (cpf.length !== 11) && styles.disabledButton,
+                        styles.checkButton
+                      ]}
+                      onPress={checkCPF}
+                      disabled={loading || cpf.length !== 11}
+                    >
+                      <View style={styles.buttonContent}>
+                        {loading ? (
+                          <ActivityIndicator color="#e4ff04" size="large" />
+                        ) : (
+                          <Text style={[
+                            styles.buttonText,
+                            styles.secondaryButtonText,
+                            isTablet ? styles.buttonTextTablet : styles.buttonTextMobile
+                          ]}>Verificar CPF</Text>
+                        )}
+                      </View>
+                      <View style={[
+                        styles.buttonGlow,
+                        styles.secondaryButtonGlow,
+                        isTablet ? styles.buttonGlowTablet : styles.buttonGlowMobile
+                      ]} />
+                    </TouchableOpacity>
+                  )}
+                </View>
+
+                {showOtherFields && (
+                  <>
+                    <View style={[styles.rowContainer, isTablet ? styles.rowContainerTablet : styles.rowContainerMobile]}>
+                      <View style={[styles.inputSubContainer, isTablet ? styles.inputSubContainerTablet : styles.inputSubContainerMobile]}>
                         <Text style={[
-                          styles.buttonText,
-                          styles.primaryButtonText,
-                          isTablet ? styles.buttonTextTablet : styles.buttonTextMobile
-                        ]}>Cadastrar</Text>
-                      )}
+                          styles.label,
+                          isTablet ? styles.labelTablet : styles.labelMobile
+                        ]}>Nome *</Text>
+                        <TextInput
+                          style={[
+                            styles.input,
+                            styles.inputSmall,
+                            isTablet ? styles.inputTablet : styles.inputMobile
+                          ]}
+                          value={name}
+                          onChangeText={setName}
+                          placeholder="Digite seu nome"
+                          placeholderTextColor="rgba(255, 255, 255, 0.5)"
+                          autoCapitalize="words"
+                        />
+                      </View>
+                      <View style={[styles.inputSubContainer, isTablet ? styles.inputSubContainerTablet : styles.inputSubContainerMobile]}>
+                        <Text style={[
+                          styles.label,
+                          isTablet ? styles.labelTablet : styles.labelMobile
+                        ]}>Sobrenome *</Text>
+                        <TextInput
+                          style={[
+                            styles.input,
+                            styles.inputSmall,
+                            isTablet ? styles.inputTablet : styles.inputMobile
+                          ]}
+                          value={lastName}
+                          onChangeText={setLastName}
+                          placeholder="Digite seu sobrenome"
+                          placeholderTextColor="rgba(255, 255, 255, 0.5)"
+                          autoCapitalize="words"
+                        />
+                      </View>
                     </View>
-                    <View style={[
-                      styles.buttonGlow,
-                      isTablet ? styles.buttonGlowTablet : styles.buttonGlowMobile
-                    ]} />
-                  </TouchableOpacity>
-                </>
-              )}
-            </View>
-          )}
-        </View>
-      </ScrollView>
+
+                    <View style={styles.inputContainer}>
+                      <Text style={[
+                        styles.label,
+                        isTablet ? styles.labelTablet : styles.labelMobile
+                      ]}>Email *</Text>
+                      <TextInput
+                        style={[
+                          styles.input,
+                          isTablet ? styles.inputTablet : styles.inputMobile
+                        ]}
+                        value={email}
+                        onChangeText={setEmail}
+                        placeholder="seu@email.com"
+                        placeholderTextColor="rgba(255, 255, 255, 0.5)"
+                        keyboardType="email-address"
+                        autoCapitalize="none"
+                      />
+                    </View>
+
+                    <View style={[styles.rowContainer, isTablet ? styles.rowContainerTablet : styles.rowContainerMobile]}>
+                      <View style={[styles.inputSubContainer, isTablet ? styles.inputSubContainerTablet : styles.inputSubContainerMobile]}>
+                        <Text style={[
+                          styles.label,
+                          isTablet ? styles.labelTablet : styles.labelMobile
+                        ]}>Telefone *</Text>
+                        <TextInput
+                          style={[
+                            styles.input,
+                            styles.inputSmall,
+                            isTablet ? styles.inputTablet : styles.inputMobile
+                          ]}
+                          value={displayPhone(cellphone)}
+                          onChangeText={formatPhone}
+                          placeholder="(11) 99999-9999"
+                          placeholderTextColor="rgba(255, 255, 255, 0.5)"
+                          keyboardType="numeric"
+                          maxLength={15}
+                        />
+                      </View>
+                      <View style={[styles.inputSubContainer, isTablet ? styles.inputSubContainerTablet : styles.inputSubContainerMobile]}>
+                        <Text style={[
+                          styles.label,
+                          isTablet ? styles.labelTablet : styles.labelMobile
+                        ]}>Data de Nascimento *</Text>
+                        <TextInput
+                          style={[
+                            styles.input,
+                            styles.inputSmall,
+                            isTablet ? styles.inputTablet : styles.inputMobile
+                          ]}
+                          value={dateBirthday}
+                          onChangeText={formatDateBirthday}
+                          placeholder="DD/MM/AAAA"
+                          placeholderTextColor="rgba(255, 255, 255, 0.5)"
+                          keyboardType="numeric"
+                          maxLength={10}
+                        />
+                      </View>
+                    </View>
+
+                    <TouchableOpacity
+                      style={[
+                        styles.button,
+                        styles.primaryButton,
+                        isTablet ? styles.buttonTablet : styles.buttonMobile,
+                        loading && styles.disabledButton,
+                        !isFormValid && styles.disabledButton
+                      ]}
+                      onPress={registerUser}
+                      disabled={loading || !isFormValid}
+                    >
+                      <View style={styles.buttonContent}>
+                        {loading ? (
+                          <ActivityIndicator color="#000" size="large" />
+                        ) : (
+                          <Text style={[
+                            styles.buttonText,
+                            styles.primaryButtonText,
+                            isTablet ? styles.buttonTextTablet : styles.buttonTextMobile
+                          ]}>Cadastrar</Text>
+                        )}
+                      </View>
+                      <View style={[
+                        styles.buttonGlow,
+                        isTablet ? styles.buttonGlowTablet : styles.buttonGlowMobile
+                      ]} />
+                    </TouchableOpacity>
+                  </>
+                )}
+              </View>
+            )}
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
 
       {/* Tela de Sucesso */}
       <SuccessScreen
@@ -1124,15 +1102,51 @@ export default function RegistrationScreen({ navigation, isProductionMode }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000000', // Brand dark
+    backgroundColor: '#000000',
+  },
+
+  // Header fixo
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingVertical: 15,
+    backgroundColor: '#000000',
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
+    zIndex: 1000, // Garante que fique acima de tudo
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(228, 255, 4, 0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(228, 255, 4, 0.3)',
+  },
+  backButtonText: {
+    color: '#e4ff04',
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+  headerTitle: {
+    color: '#e4ff04',
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+  headerSpacer: {
+    width: 40, // Mesma largura do botão back para centralizar o título
   },
 
   // Server info com badge moderno
   serverInfoContainer: {
     alignItems: 'flex-end',
-    padding: 12,
-    paddingRight: 20,
-    zIndex: 10, // Garante que fique acima do conteúdo
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    backgroundColor: '#000000',
   },
   serverBadge: {
     paddingHorizontal: 12,
@@ -1159,28 +1173,28 @@ const styles = StyleSheet.create({
     color: '#4CAF50',
   },
 
-  // Conteúdo principal
+  // Layout principal
+  keyboardAvoidingView: {
+    flex: 1,
+  },
+  scrollView: {
+    flex: 1,
+  },
   scrollContent: {
     flexGrow: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  // Layout específico para QR Codes - remove centralização vertical
-  scrollContentQR: {
-    justifyContent: 'flex-start',
-    paddingTop: 40,
+    paddingBottom: 40, // Espaço extra no final
   },
   content: {
-    width: '100%',
+    flex: 1,
     alignItems: 'center',
+    justifyContent: 'flex-start', // Sempre alinha no topo
+    paddingTop: 20,
   },
   contentTablet: {
     paddingHorizontal: 40,
-    paddingVertical: 60,
   },
   contentMobile: {
     paddingHorizontal: 20,
-    paddingVertical: 40,
   },
 
   formSection: {
@@ -1189,101 +1203,136 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
 
+  // Container dos QR Codes
+  qrContainer: {
+    width: '100%',
+    maxWidth: 700,
+    alignItems: 'center',
+    paddingTop: 20,
+  },
+  qrRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    width: '100%',
+    marginBottom: 30,
+  },
+  qrImageContainer: {
+    flex: 1,
+    marginHorizontal: 10,
+    alignItems: 'center',
+  },
+  qrImage: {
+    width: '100%',
+    height: 300,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
+    backgroundColor: 'rgba(255,255,255,0.05)',
+  },
+  qrImageTablet: {
+    height: 380,
+  },
+  qrImageMobile: {
+    height: 280,
+  },
+
   // Título
   title: {
     fontWeight: 'bold',
     textAlign: 'center',
-    marginBottom: 40,
+    marginBottom: 30,
     color: '#e4ff04',
   },
   titleTablet: {
-    fontSize: 32,
+    fontSize: 28,
   },
   titleMobile: {
-    fontSize: 28,
+    fontSize: 24,
   },
 
   // Campos de input
   inputContainer: {
-    marginBottom: 25,
+    marginBottom: 20,
     width: '100%',
   },
   label: {
     fontWeight: '600',
-    marginBottom: 10,
+    marginBottom: 8,
     color: 'rgba(255, 255, 255, 0.8)',
   },
   labelTablet: {
-    fontSize: 18,
+    fontSize: 16,
   },
   labelMobile: {
-    fontSize: 16,
+    fontSize: 14,
   },
   input: {
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.2)',
     borderRadius: 12,
-    padding: 20,
-    fontSize: 18,
+    padding: 16,
     backgroundColor: 'rgba(26, 26, 26, 0.8)',
     color: '#fff',
-    minHeight: 60,
+    minHeight: 50,
   },
   inputTablet: {
-    fontSize: 18,
+    fontSize: 16,
+    padding: 18,
+    minHeight: 55,
   },
   inputMobile: {
-    fontSize: 16,
+    fontSize: 14,
+    padding: 16,
+    minHeight: 50,
   },
 
-  // Botões principais com design moderno
+  // Botões principais
   button: {
     borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
     overflow: 'hidden',
+    minWidth: 200,
   },
   buttonTablet: {
-    padding: 20,
-    minHeight: 70,
+    padding: 18,
+    minHeight: 60,
+    minWidth: 250,
   },
   buttonMobile: {
-    padding: 16,
-    minHeight: 60,
+    padding: 14,
+    minHeight: 50,
+    minWidth: 180,
   },
 
   checkButton: {
-    marginTop: 15,
+    marginTop: 12,
+    alignSelf: 'center',
   },
 
   // Botão primário (Cadastrar)
   primaryButton: {
-    backgroundColor: '#e4ff04', // Brand yellow
+    backgroundColor: '#e4ff04',
     shadowColor: '#e4ff04',
-    shadowOffset: {
-      width: 0,
-      height: 8,
-    },
-    shadowOpacity: 0.4,
-    shadowRadius: 16,
-    elevation: 12,
-    width: '60%',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+    marginTop: 20,
   },
 
-  // Botão secundário (Verificar CPF)
+  // Botão secundário 
   secondaryButton: {
     backgroundColor: '#1A1A1A',
     borderWidth: 2,
     borderColor: '#e4ff04',
     shadowColor: '#e4ff04',
-    shadowOffset: {
-      width: 0,
-      height: 8,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 16,
-    elevation: 12,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 6,
   },
 
   // Conteúdo do botão
@@ -1293,16 +1342,16 @@ const styles = StyleSheet.create({
     zIndex: 2,
   },
 
-  // Texto principal do botão
+  // Texto do botão
   buttonText: {
     fontWeight: 'bold',
     textAlign: 'center',
   },
   buttonTextTablet: {
-    fontSize: 20,
+    fontSize: 18,
   },
   buttonTextMobile: {
-    fontSize: 18,
+    fontSize: 16,
   },
   primaryButtonText: {
     color: '#000000',
@@ -1314,26 +1363,26 @@ const styles = StyleSheet.create({
   // Efeito glow nos botões
   buttonGlow: {
     position: 'absolute',
-    top: -20,
-    left: -20,
-    right: -20,
-    bottom: -20,
+    top: -10,
+    left: -10,
+    right: -10,
+    bottom: -10,
     backgroundColor: '#e4ff04',
     opacity: 0.1,
-    borderRadius: 30,
+    borderRadius: 25,
     zIndex: 1,
   },
   buttonGlowTablet: {
-    top: -30,
-    left: -30,
-    right: -30,
-    bottom: -30,
+    top: -15,
+    left: -15,
+    right: -15,
+    bottom: -15,
   },
   buttonGlowMobile: {
-    top: -20,
-    left: -20,
-    right: -20,
-    bottom: -20,
+    top: -10,
+    left: -10,
+    right: -10,
+    bottom: -10,
   },
   secondaryButtonGlow: {
     backgroundColor: '#e4ff04',
@@ -1343,61 +1392,31 @@ const styles = StyleSheet.create({
   disabledButton: {
     opacity: 0.6,
   },
+
+  // Layout de linha para campos
   rowContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     width: '100%',
-    marginBottom: 25,
+    marginBottom: 20,
   },
-
   rowContainerTablet: {
-    marginBottom: 30,
+    marginBottom: 25,
   },
   rowContainerMobile: {
-    marginBottom: 25,
+    marginBottom: 20,
   },
   inputSubContainer: {
     flex: 1,
-    marginRight: 15,
+    marginRight: 10,
   },
   inputSubContainerTablet: {
-    marginRight: 20,
+    marginRight: 15,
   },
   inputSubContainerMobile: {
-    marginRight: 15,
+    marginRight: 10,
   },
   inputSmall: {
     flex: 1,
-  },
-  qrContainerWrapper: {
-    width: '100%',
-    maxWidth: 700,
-    alignItems: 'center',
-    marginBottom: 30,
-  },
-  qrRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    width: '100%',
-  },
-  qrImage: {
-    flex: 1,
-    height: 320,
-    marginHorizontal: 10,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
-    backgroundColor: 'rgba(255,255,255,0.05)',
-  },
-  qrImageTablet: {
-    height: 420,
-  },
-  qrImageMobile: {
-    height: 300,
-  },
-  qrResetButton: {
-    marginTop: 25,
-    width: '70%',
   },
 });
