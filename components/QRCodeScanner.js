@@ -321,7 +321,7 @@ export default function QRCodeScanner({ visible, onClose, onSuccess, onAlreadyDo
     // Mostra confirmação antes de registrar
     Alert.alert(
       'QR Code Lido com Sucesso!',
-      `Dados lidos: ${processedData.substring(0, 50)}${processedData.length > 50 ? '...' : ''}\n\nDeseja registrar a entrada no estande?`,
+      `Deseja registrar a entrada no estande?`,
       [
         {
           text: 'Não',
