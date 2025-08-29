@@ -330,7 +330,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: 'rgba(0, 0, 0, 0.95)',
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
+    borderBottomColor: '#e4ff04',
   },
   adminAreaTablet: {
     paddingHorizontal: 40,
@@ -575,7 +575,7 @@ const styles = StyleSheet.create({
   // Footer
   footer: {
     borderTopWidth: 1,
-    borderTopColor: 'rgba(255, 255, 255, 0.1)',
+    borderTopColor: '#e4ff04',
     backgroundColor: 'rgba(0, 0, 0, 0.95)',
     paddingVertical: 16,
     paddingHorizontal: 20,

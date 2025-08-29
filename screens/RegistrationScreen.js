@@ -510,10 +510,12 @@ export default function RegistrationScreen({ navigation, isProductionMode }) {
   };
 
   const registerUser = async () => {
-    if (!cpf || !name || !lastName || !email || !cellphone || !dateBirthday) {
-      Alert.alert('Erro', 'Todos os campos são obrigatórios');
-      return;
-    }
+  const documentValid = isBrazilian ? cpf && cpf.length === 11 : passport && passport.trim().length > 0;
+  
+  if (!documentValid || !name || !lastName || !email || !cellphone || !dateBirthday) {
+    Alert.alert('Erro', 'Todos os campos são obrigatórios');
+    return;
+  }
 
     // Validação (18+)
     const parts = dateBirthday.split('/');
@@ -778,16 +780,18 @@ export default function RegistrationScreen({ navigation, isProductionMode }) {
                 try {
                   const standName = (await ConfigStorage.getAtividade()) || 'the one';
                   const tabletName = (await ConfigStorage.getTabletId()) || '';
-                  const activityBody = JSON.stringify({
-                    cpf: cpf,
-                    method: 'cpf',
-                    stand_name: standName.toLowerCase(),
-                    tablet_name: tabletName,
-                    client_attempt_at: generateClientCreatedAt(),
+                   const activityBody = JSON.stringify({
+                        is_foreign: !isBrazilian,
+                        id_type: isBrazilian ? 'cpf' : 'passport',
+                        id_number: isBrazilian ? cpf : passport,
+                        method: 'cpf',
+                        stand_name: standName.toLowerCase(),
+                        tablet_name: tabletName,
+                        client_validated_at: generateClientCreatedAt(),
                   });
                   const localBaseUrl = (await ConfigStorage.getLocalBaseUrl()) || 'http://192.168.0.34:8000';
                   const normalizedBaseUrl = localBaseUrl.replace(/\/$/, '');
-                  const activityUrl = `${normalizedBaseUrl}/activity`;
+                  const activityUrl = `${normalizedBaseUrl}/activity/validate`;
                   try {
                     await fetch(activityUrl, {
                       method: 'POST',
@@ -802,14 +806,15 @@ export default function RegistrationScreen({ navigation, isProductionMode }) {
                     setShowSuccessScreen(true);
                   } catch (err) {
                     console.log('[ERRO DE CONEXÃO LOCALHOST - activity]', err);
-                    Alert.alert('Erro ao conectar no backend local', `Não foi possível acessar o endpoint /activity.\n\nMotivo: ${err && err.message ? err.message : err}`);
+                    Alert.alert('Erro ao conectar no backend local', `Não foi possível acessar o endpoint /activity/validate.\n\nMotivo: ${err && err.message ? err.message : err}`);
                     setSuccessMessage('Usuário cadastrado, mas não foi possível registrar a atividade.');
                     setShowSuccessScreen(true);
                   }
                 } catch (activityError) {
                   console.log('Erro ao registrar atividade (local):', activityError);
                   setSuccessMessage('Usuário cadastrado, mas não foi possível registrar a atividade.');
-                  setShowSuccessScreen(true);
+                  Alert.alert('Erro', 'Não foi possível registrar atividade. Tente novamente.' , activityError);
+                  setShowSuccessScreen(false);
                 }
               }
             }
