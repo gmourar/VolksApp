@@ -299,15 +299,16 @@ export default function QRCodeScanner({ visible, onClose, onSuccess, onAlreadyDo
       return;
     }
 
-    // Valida se o data não está vazio
-    if (!data || data.trim() === '') {
+    // Normaliza e valida o dado lido
+    const scannedValue = typeof data === 'string' ? data.trim() : String(data ?? '').trim();
+    if (!scannedValue) {
       console.log('QR Code vazio ignorado');
       return;
     }
 
-    console.log('QR Code lido:', { data, type });
+    console.log('QR Code lido:', { data: scannedValue, type });
     setScanned(true);
-    setScannedData(data.trim());
+    setScannedData(scannedValue);
 
     // Mostra confirmação antes de registrar
     Alert.alert(
@@ -346,7 +347,8 @@ export default function QRCodeScanner({ visible, onClose, onSuccess, onAlreadyDo
               resetStates();
             }, 10000);
 
-            await registerActivity(scannedData);
+            // Usa o valor lido imediatamente, evitando condição de corrida com setState
+            await registerActivity(scannedValue);
           }
         }
       ]
