@@ -290,6 +290,7 @@ export default function RegistrationScreen({ navigation, isProductionMode }) {
           body: JSON.stringify(prodBody),
         });
 
+        
         console.log('CPF Check Response Status:', response.status);
         const data = await response.json().catch(() => null);
         console.log('CPF Check Response Body:', data);
@@ -410,10 +411,11 @@ export default function RegistrationScreen({ navigation, isProductionMode }) {
           Alert.alert('Erro ao conectar no backend local', `Não foi possível acessar o endpoint /cpf/status.\n\nMotivo: ${err && err.message ? err.message : err}`);
           throw err;
         }
-
+      
         console.log('CPF Check Response Status:', response.status);
         const data = await response.json().catch(() => null);
         console.log('CPF Check Response Body (LOCAL):', data);
+        console.log('Request Body (LOCAL):', isBrazilian ? { cpf: displayCPF(cpf), is_foreign: false, id_type: 'cpf', stand_name: standName.toLowerCase(), tablet_name: tabletName, client_checked_at: generateClientCreatedAt() } : { is_foreign: true, id_type: 'passport', id_number: passport, stand_name: standName.toLowerCase(), tablet_name: tabletName, client_checked_at: generateClientCreatedAt() });
 
         if (response.ok && data) {
           const exists = (data.dados && data.dados.existe === true) || (data.status === 'success' && !!data.usuario);
@@ -757,7 +759,7 @@ export default function RegistrationScreen({ navigation, isProductionMode }) {
       console.log(`Request Duration: ${requestDuration}ms`);
       console.log(`Response Status: ${response.status} ${response.statusText}`);
 
-      if (response.ok) {
+      if (response.status === null || response.status === undefined) {
         const responseData = await response.json();
         console.log('SUCCESS! Response Data (Local):', responseData);
 
@@ -770,7 +772,7 @@ export default function RegistrationScreen({ navigation, isProductionMode }) {
               style: 'cancel',
               onPress: () => {
                 setSuccessMessage('Usuário cadastrado com sucesso localmente!');
-                setShowSuccessScreen(true);
+                setShowSuccessScreen(false);
               }
             },
             {
@@ -821,7 +823,7 @@ export default function RegistrationScreen({ navigation, isProductionMode }) {
           ]
         );
       } else {
-        console.log(`Response não OK: ${response.status}`);
+        console.log(`Response não OK: ${response.status === "error" ? "error" : response.status}`);
         let errorData = null;
         try { errorData = await response.json(); } catch (_) { /* ignore */ }
         const msg = buildErrorMessage('Erro ao cadastrar usuário localmente', { status: response.status, data: errorData });
